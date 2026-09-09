@@ -1,4 +1,4 @@
-#ifndef HORARIO_H
+#ifndef HORARIOS_H
 #define HORARIOS_H
 
 #define maxcursos 100
