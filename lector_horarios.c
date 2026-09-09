@@ -3,7 +3,6 @@
 #include <string.h>
 #include "horarios.h"
 
-// Elimina comillas y caracteres de salto de línea
 void limpiar_cadena(char *src) {
     int i = 0, j = 0;
     while (src[i]) {
@@ -15,7 +14,6 @@ void limpiar_cadena(char *src) {
     src[j] = '\0';
 }
 
-// Separa la línea del CSV por comas respetando los textos entre comillas
 int parsear_linea_csv(char *linea, char tokens[][512], int max_tokens) {
     char *ptr = linea;
     char buffer[512];
@@ -47,7 +45,6 @@ int parsear_linea_csv(char *linea, char tokens[][512], int max_tokens) {
     return token_count;
 }
 
-// Busca si un curso ya fue registrado previamente en el catálogo
 int buscar_curso(Curso catalogo[], int total_cursos, const char *codigo) {
     for (int i = 0; i < total_cursos; i++) {
         if (strcmp(catalogo[i].codigo, codigo) == 0) {
@@ -57,7 +54,6 @@ int buscar_curso(Curso catalogo[], int total_cursos, const char *codigo) {
     return -1;
 }
 
-// Extrae patrones como "MAR[15:00-17:50]" o "MAR[09:30-11:20] JUE[09:30-11:20]"
 void parsear_horario_str(const char *str_horario, int grupo, Curso *curso) {
     char temp[256];
     strncpy(temp, str_horario, sizeof(temp) - 1);
@@ -65,16 +61,15 @@ void parsear_horario_str(const char *str_horario, int grupo, Curso *curso) {
 
     char *p = temp;
     while (*p != '\0' && curso->cant_horarios < 5) {
-        // Busca patrón de 3 letras de día seguido de '[' (ej. MAR[, JUE[, LUN[)
         if (p[0] >= 'A' && p[0] <= 'Z' && p[1] >= 'A' && p[1] <= 'Z' && p[2] >= 'A' && p[2] <= 'Z' && p[3] == '[') {
             Horario h;
             h.grupo = grupo;
             snprintf(h.dias, sizeof(h.dias), "%.3s", p);
             
-            p += 4; // Avanzar "DIA["
+            p += 4;
             if (strlen(p) >= 11 && p[5] == '-') {
                 snprintf(h.horainicio, sizeof(h.horainicio), "%.5s", p);
-                p += 6; // Avanzar "hh:mm-"
+                p += 6;
                 snprintf(h.horafin, sizeof(h.horafin), "%.5s", p);
                 
                 curso->horarios[curso->cant_horarios] = h;
@@ -101,18 +96,18 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
         buffer[strcspn(buffer, "\r\n")] = 0;
         if (strlen(buffer) == 0) continue;
 
-        if (es_encabezado) { // Omitir títulos del CSV
+        if (es_encabezado) {
             es_encabezado = 0;
             continue;
         }
 
         int num_tokens = parsear_linea_csv(buffer, tokens, 10);
-        if (num_tokens < 8) continue; // horarios.csv contiene 8 columnas
+        if (num_tokens < 8) continue; 
 
-        char *codigo = tokens[2];       // Columna Codigo
-        char *nombre = tokens[3];       // Columna Materia
-        int grupo = atoi(tokens[5]);    // Columna Periodo / Grupo
-        char *str_horario = tokens[7];  // Columna Horario
+        char *codigo = tokens[2];       
+        char *nombre = tokens[3];       
+        int grupo = atoi(tokens[5]);    
+        char *str_horario = tokens[7];  
 
         int pos = buscar_curso(catalogo, total_cursos, codigo);
 
@@ -125,7 +120,7 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
             strncpy(catalogo[pos].nombre, nombre, sizeof(catalogo[pos].nombre) - 1);
             catalogo[pos].nombre[sizeof(catalogo[pos].nombre) - 1] = '\0';
 
-            catalogo[pos].creditos = 0; // Valor por defecto
+            catalogo[pos].creditos = 0; 
             strcpy(catalogo[pos].requisitos, "N/A");
             strcpy(catalogo[pos].correquisitos, "N/A");
             catalogo[pos].cant_horarios = 0;
@@ -149,13 +144,12 @@ int main() {
         return 1;
     }
 
-    printf("=== CATÁLOGO CARGADO EXITOSAMENTE ===\n");
-    printf("Total de cursos únicos cargados: %d\n\n", total);
+    printf("Total de cursos únicos %d\n\n", total);
 
     for (int i = 0; i < total; i++) {
         printf("Curso [%s]: %s\n", catalogo[i].codigo, catalogo[i].nombre);
         for (int j = 0; j < catalogo[i].cant_horarios; j++) {
-            printf("  -> Grupo %d: %s de %s a %s\n",
+            printf("Grupo %d: %s de %s a %s\n",
                    catalogo[i].horarios[j].grupo,
                    catalogo[i].horarios[j].dias,
                    catalogo[i].horarios[j].horainicio,
