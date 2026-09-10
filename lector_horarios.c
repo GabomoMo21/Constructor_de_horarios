@@ -81,7 +81,9 @@ void parsear_horario_str(const char *str_horario, int grupo, Curso *curso) {
 }
 
 int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
+
     FILE *archivo = fopen(nombre_archivo, "r");
+
     if (archivo == NULL) {
         fprintf(stderr, "Error al abrir el archivo %s\n", nombre_archivo);
         return -1;
@@ -89,12 +91,16 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
 
     char buffer[2048];
     char tokens[10][512];
+
     int total_cursos = 0;
     int es_encabezado = 1;
 
     while (fgets(buffer, sizeof(buffer), archivo)) {
-        buffer[strcspn(buffer, "\r\n")] = 0;
-        if (strlen(buffer) == 0) continue;
+
+        buffer[strcspn(buffer, "\r\n")] = '\0';
+
+        if (strlen(buffer) == 0)
+            continue;
 
         if (es_encabezado) {
             es_encabezado = 0;
@@ -102,36 +108,75 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
         }
 
         int num_tokens = parsear_linea_csv(buffer, tokens, 10);
-        if (num_tokens < 8) continue; 
 
-        char *codigo = tokens[2];       
-        char *nombre = tokens[3];       
-        int grupo = atoi(tokens[5]);    
-        char *str_horario = tokens[7];  
+        if (num_tokens < 7)
+            continue;
+
+        char *codigo = tokens[1];
+        char *nombre = tokens[2];
+        char *str_horario = tokens[4];
 
         int pos = buscar_curso(catalogo, total_cursos, codigo);
 
         if (pos == -1) {
-            if (total_cursos >= maxcursos) continue;
+
+            if (total_cursos >= maxcursos)
+                continue;
+
             pos = total_cursos;
-            strncpy(catalogo[pos].codigo, codigo, sizeof(catalogo[pos].codigo) - 1);
-            catalogo[pos].codigo[sizeof(catalogo[pos].codigo) - 1] = '\0';
 
-            strncpy(catalogo[pos].nombre, nombre, sizeof(catalogo[pos].nombre) - 1);
-            catalogo[pos].nombre[sizeof(catalogo[pos].nombre) - 1] = '\0';
+            strncpy(
+                catalogo[pos].codigo,
+                codigo,
+                sizeof(catalogo[pos].codigo) - 1
+            );
+            catalogo[pos].codigo[
+                sizeof(catalogo[pos].codigo) - 1
+            ] = '\0';
 
-            catalogo[pos].creditos = 0; 
-            strcpy(catalogo[pos].requisitos, "N/A");
-            strcpy(catalogo[pos].correquisitos, "N/A");
+            strncpy(
+                catalogo[pos].nombre,
+                nombre,
+                sizeof(catalogo[pos].nombre) - 1
+            );
+            catalogo[pos].nombre[
+                sizeof(catalogo[pos].nombre) - 1
+            ] = '\0';
+
+            catalogo[pos].creditos = atoi(tokens[3]);
+
+            strncpy(
+                catalogo[pos].requisitos,
+                tokens[5],
+                sizeof(catalogo[pos].requisitos) - 1
+            );
+            catalogo[pos].requisitos[
+                sizeof(catalogo[pos].requisitos) - 1
+            ] = '\0';
+
+            strncpy(
+                catalogo[pos].correquisitos,
+                tokens[6],
+                sizeof(catalogo[pos].correquisitos) - 1
+            );
+            catalogo[pos].correquisitos[
+                sizeof(catalogo[pos].correquisitos) - 1
+            ] = '\0';
+
             catalogo[pos].cant_horarios = 0;
 
             total_cursos++;
         }
 
-        parsear_horario_str(str_horario, grupo, &catalogo[pos]);
+        parsear_horario_str(
+            str_horario,
+            1,
+            &catalogo[pos]
+        );
     }
 
     fclose(archivo);
+
     return total_cursos;
 }
 
