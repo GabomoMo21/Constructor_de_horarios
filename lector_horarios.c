@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "horarios.h"
+#include "lector_horarios.h"
 
 void limpiar_cadena(char *src) {
     int i = 0, j = 0;
@@ -178,30 +178,4 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
     fclose(archivo);
 
     return total_cursos;
-}
-
-int main() {
-    Curso catalogo[maxcursos];
-    int total = cargar_catalogo("horarios.csv", catalogo);
-
-    if (total <= 0) {
-        printf("Error: No se pudieron cargar los cursos.\n");
-        return 1;
-    }
-
-    printf("Total de cursos únicos %d\n\n", total);
-
-    for (int i = 0; i < total; i++) {
-        printf("Curso [%s]: %s\n", catalogo[i].codigo, catalogo[i].nombre);
-        for (int j = 0; j < catalogo[i].cant_horarios; j++) {
-            printf("Grupo %d: %s de %s a %s\n",
-                   catalogo[i].horarios[j].grupo,
-                   catalogo[i].horarios[j].dias,
-                   catalogo[i].horarios[j].horainicio,
-                   catalogo[i].horarios[j].horafin);
-        }
-        printf("----------------------------------------\n");
-    }
-
-    return 0;
 }

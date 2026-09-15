@@ -19,6 +19,10 @@ typedef struct {
     char correquisitos[maxstr];
     Horario horarios[5];
     int cant_horarios;
+    int cumple_requisitos;     
+    int cumple_correquisitos;  
+    int puede_matricular;      
+    int tiene_choque;          
 } Curso;
 
 #endif
