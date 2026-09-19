@@ -3,14 +3,12 @@
 #include <stdlib.h>
 #include "choques.h"
 
-/* Convierte una hora "HH:MM" a minutos totales */
 static int hora_a_minutos(const char *hora_str) {
     int horas = 0, minutos = 0;
     sscanf(hora_str, "%d:%d", &horas, &minutos);
     return horas * 60 + minutos;
 }
 
-/* Compara dos bloques de horario */
 int horarios_chocan(Horario h1, Horario h2) {
     if (strcmp(h1.dias, h2.dias) != 0) {
         return 0; // Distinto día, no chocan
@@ -21,14 +19,12 @@ int horarios_chocan(Horario h1, Horario h2) {
     int inicio2 = hora_a_minutos(h2.horainicio);
     int fin2 = hora_a_minutos(h2.horafin);
 
-    // Dos rangos se traslapan si: A < D && C < B
     if (inicio1 < fin2 && inicio2 < fin1) {
         return 1;
     }
     return 0;
 }
 
-/* Recorre el catálogo y detecta choques */
 void detectar_choques_catalogo(Curso catalogo[], int total_cursos) {
     for (int i = 0; i < total_cursos; i++) {
         catalogo[i].tiene_choque = 0;
