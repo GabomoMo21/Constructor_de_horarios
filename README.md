@@ -1,80 +1,89 @@
 # CEmestre — Etapa 1 (C) — Estado del proyecto
 
-Este README describe lo que ya está hecho (Persona 1 y Persona 2) para que **Persona 3**
-(choques de horario) y **Persona 4** (ciclos + exportación + documentación final)
-puedan arrancar sin tener que leer todo el código desde cero.
+Este README describe con todo detalle lo que ya está hecho (Persona 1, Persona 2 y Persona 3) para que Persona 4 (ciclos + exportación + documentación final) pueda arrancar sin tener que leer todo el código desde cero y comprendiendo la arquitectura completa del sistema.
 
 ---
 
-## 1. Estructura de archivos
+## 1. Estructura y organización de archivos
 
-```
-horarios.h            Structs compartidos: Curso, Horario, constantes
-horarios.csv          Catálogo de cursos (entrada) — recolectado por Persona 1
-historial.csv         Cursos aprobados por el estudiante (entrada) — formato Persona 2
+El proyecto se encuentra dividido modularmente para mantener una separación limpia de responsabilidades entre los integrantes del equipo:
 
-lector_horarios.h/.c  Persona 1: carga y limpieza del catálogo (cargar_catalogo)
-historial.h/.c        Persona 2: historial + validación de requisitos/correquisitos
+- **`horarios.h`**: Contiene las estructuras de datos globales compartidas (`Curso`, `Horario`) y las constantes principales del sistema (como límites de arreglos y strings).
 
-main.c                Único main() del proyecto. Aquí se van enganchando los módulos.
-```
+- **`horarios.csv`**: Archivo de entrada que contiene el catálogo completo de cursos recolectado por la Persona 1.
 
-Cada persona trabaja en su propio `.c`/`.h` y **no debe tener un `main()` propio**
-en el archivo que sube al repo final (para probar su módulo solo, pueden hacer un
-`main_prueba_personaX.c` aparte y no subirlo, o subirlo fuera de la compilación
-final).
+- **`historial.csv`**: Archivo de entrada que contiene los códigos de los cursos aprobados por el estudiante, gestionado por la Persona 2.
 
-### Cómo compilar todo lo que hay hasta ahora
+- **`lector_horarios.h` y `lector_horarios.c`**: Módulo desarrollado por la Persona 1 encargado de la lectura robusta, carga en memoria y limpieza inicial del catálogo de cursos (`cargar_catalogo`).
 
-```bash
-gcc -Wall -o proyecto lector_horarios.c historial.c main.c
-./proyecto        # en Windows: .\proyecto.exe
-```
+- **`historial.h` y `historial.c`**: Módulo desarrollado por la Persona 2 encargado de cargar el historial académico y validar de forma lógica el cumplimiento de requisitos y correquisitos.
 
----
+- **`choques.h` y `choques.c`**: Módulo desarrollado por la Persona 3 encargado de la conversión de formatos de hora y la detección automatizada de cruces de horario entre los grupos del catálogo.
 
-## 2. Formato del archivo de entrada `horarios.csv`
+- **`main.c`**: Archivo principal que integra y ejecuta secuencialmente los módulos anteriores.
 
-Columnas (separadas por coma, con encabezado en la primera línea):
+### Notas importantes sobre la compilación y desarrollo
 
-```
-Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos
-```
+Cada integrante trabaja exclusivamente en su propio par de archivos `.c` y `.h`. 
 
-- **Requisitos / Correquisitos**: códigos separados por `;` (ej. `CE1101;CE1104;MA1403`),
-  o el texto literal `No hay` si el curso no tiene.
-- **Horarios**: grupos separados por ` | `, cada uno con este formato:
+Está estrictamente prohibido que los módulos individuales contengan su propia función `main()` dentro del repositorio final. 
 
-  ```
-  P1-G1=MIE[18:00-20:50];VIE[18:00-19:50]
-  ```
+Para realizar pruebas independientes de cada módulo, se pueden crear archivos temporales auxiliares (por ejemplo, `main_prueba_personaX.c`), los cuales no deben subirse ni incluirse en la compilación final del equipo.
 
-  Es decir: `Periodo-Grupo = DIA[hora_inicio-hora_fin];DIA[hora_inicio-hora_fin];...`
-  Un mismo grupo puede reunirse varios días (por eso el `;` dentro del grupo).
-  Los días vienen en 3 letras: `LUN, MAR, MIE, JUE, VIE, SAB`.
+### Cómo compilar todo el proyecto hasta esta etapa
 
-## 3. Formato de `historial.csv` (Persona 2)
+Para compilar todos los módulos integrados mediante la línea de comandos con GCC, utiliza la siguiente instrucción:
 
-Un código de curso por línea, con encabezado `Codigo`:
+`gcc -Wall -o proyecto lector_horarios.c historial.c choques.c main.c`
 
-```
-Codigo
-MA0101
-CE1101
-CE1104
-...
-```
+`./proyecto        # En sistemas Windows: .\proyecto.exe`
 
 ---
 
-## 4. Structs en `horarios.h`
+## 2. Formato detallado del archivo de entrada `horarios.csv`
 
-```c
+El archivo de catálogo utiliza un formato de valores separados por comas (CSV), asegurando que la primera línea corresponda estrictamente a los encabezados obligatorios:
+
+`Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos`
+
+- **Requisitos / Correquisitos**: Se especifican mediante los códigos oficiales de los cursos separados por un punto y coma (por ejemplo: `CE1101;CE1104;MA1403`). En caso de que un curso no posea requisitos ni correquisitos previos, se debe indicar obligatoriamente con el texto literal `No hay`.
+
+- **Horarios**: Los diferentes grupos disponibles para un curso se encuentran separados por una pleca con espacios (` | `). 
+
+Cada bloque de horario de grupo mantiene la estructura interna siguiente:
+
+`P1-G1=MIE[18:00-20:50];VIE[18:00-19:50]`
+
+En esta nomenclatura, la estructura corresponde a: 
+`Periodo-Grupo = DIA[hora_inicio-hora_fin];DIA[hora_inicio-hora_fin];...`
+
+Un mismo grupo académico puede impartirse presencialmente en múltiples días de la semana dentro de la misma semana (motivo por el cual se utiliza el punto y coma `;` para separar los días del mismo grupo). 
+
+Los días de la semana se abrevian estrictamente a 3 letras mayúsculas: `LUN`, `MAR`, `MIE`, `JUE`, `VIE`, `SAB`.
+
+---
+
+## 3. Formato del archivo de entrada `historial.csv` (Persona 2)
+
+Este archivo maneja un registro simplificado de los cursos que el estudiante ya ha superado con éxito en ciclos anteriores. Consiste en una única columna con el encabezado `Codigo`, listando un código alfanumérico por cada línea:
+
+`Codigo`
+`MA0101`
+`CE1101`
+`CE1104`
+`...`
+
+---
+
+## 4. Definición de Estructuras (`structs` en `horarios.h`)
+
+Para garantizar la interoperabilidad de los datos entre las distintas etapas del proyecto, se utilizan las siguientes estructuras base centralizadas en el archivo de cabecera común:
+
 typedef struct {
     int grupo;
     char dias[10];
-    char horainicio[6];   // "HH:MM"
-    char horafin[6];      // "HH:MM"
+    char horainicio[6];   // Formato estricto de texto "HH:MM"
+    char horafin[6];      // Formato estricto de texto "HH:MM"
 } Horario;
 
 typedef struct {
@@ -83,132 +92,70 @@ typedef struct {
     int creditos;
     char requisitos[maxstr];
     char correquisitos[maxstr];
-    Horario horarios[5];
+    Horario horarios[50]; // Arreglo ampliado a 50 para soportar cursos masivos con múltiples grupos
     int cant_horarios;
 
-    /* Llenados por Persona 2 */
+    /* Campos de validación y estado llenados por la Persona 2 */
     int cumple_requisitos;
     int cumple_correquisitos;
     int puede_matricular;
 
-    /* Persona 3 debe llenar este campo */
+    /* Campos de validación lógica añadidos por la Persona 3 */
     int tiene_choque;
 } Curso;
-```
 
-`catalogo[]` (arreglo de `Curso`, tamaño `maxcursos` = 100) es la estructura
-central que van a ir llenando **todas** las etapas. Persona 3 no crea una
-estructura nueva: recorre `catalogo[]`, compara los `Horario` de cada curso
-contra los de los demás, y marca `tiene_choque = 1` cuando corresponda.
+El arreglo global `catalogo[]` (definido con un tamaño estático máximo de `maxcursos` = 100) representa la estructura de datos central sobre la cual iterarán y trabajarán de manera secuencial todas las etapas del sistema.
 
 ---
 
-## 5. Funciones ya disponibles
+## 5. Especificación de funciones disponibles por módulo
 
-### `lector_horarios.h` (Persona 1)
-```c
-int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]);
-```
-Devuelve la cantidad de cursos cargados (o -1 si falla). Llena todo excepto
-`cumple_requisitos`, `cumple_correquisitos`, `puede_matricular` y `tiene_choque`.
+### Módulo `lector_horarios.h` (Persona 1)
 
-### `historial.h` (Persona 2)
-```c
-int cargar_historial(const char *nombre_archivo, char historial[][10], int max_historial);
-int esta_aprobado(char historial[][10], int total_historial, const char *codigo);
-int cumple_lista_requisitos(const char *lista_str, char historial[][10], int total_historial);
-void validar_requisitos_catalogo(Curso catalogo[], int total_cursos, char historial[][10], int total_historial);
-```
+- `int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]);`
 
----
+*Descripción:* Lee el archivo CSV de catálogo, limpia los espacios vacíos y deserializa la información en el arreglo de structs. Retorna la cantidad total de cursos cargados de manera exitosa (o un valor de `-1` en caso de ocurrir un error crítico de lectura). Llena todos los atributos básicos del curso a excepción de los campos de validación lógica y cruces.
 
-## 6. ⚠️ IMPORTANTE — Revisar antes de programar los choques
+### Módulo `historial.h` (Persona 2)
 
-El parseo actual de horarios tiene **dos limitaciones** que van a afectar
-directamente el trabajo de Persona 3. Conviene resolverlas en equipo (probablemente
-entre Persona 1 y Persona 3) antes de avanzar mucho con la detección de choques:
+- `int cargar_historial(const char *nombre_archivo, char historial[][10], int max_historial);`
+- `int esta_aprobado(char historial[][10], int total_historial, const char *codigo);`
+- `int cumple_lista_requisitos(const char *lista_str, char historial[][10], int total_historial);`
+- `void validar_requisitos_catalogo(Curso catalogo[], int total_cursos, char historial[][10], int total_historial);`
 
-1. **El arreglo `horarios[5]` es demasiado pequeño.** Varios cursos del catálogo
-   real tienen 20 o hasta 30 grupos distintos (ej. `MA0101` tiene 43 entradas de
-   horario). Con `Horario horarios[5]`, solo se guardan los primeros 5 bloques de
-   horario que aparecen en el texto — se pierde información real. Para detectar
-   choques bien, hace falta poder guardar todos los horarios de todos los grupos
-   de un curso (por ejemplo, subir el tamaño del arreglo, o usar un arreglo
-   dinámico/una constante más alta en el archivo de constantes).
+*Descripción:* Conjunto de funciones utilitarias y de validación académica que cruzan el historial del estudiante contra los requisitos formales de cada materia del catálogo.
 
-2. **El número de grupo no se está guardando correctamente.** En
-   `lector_horarios.c`, la función `parsear_horario_str` se llama así:
+### Módulo `choques.h` (Persona 3)
 
-   ```c
-   parsear_horario_str(str_horario, 1, &catalogo[pos]);
-   ```
+- `int horarios_chocan(Horario h1, Horario h2);`
+- `void detectar_choques_catalogo(Curso catalogo[], int total_cursos);`
 
-   El `1` es un valor fijo — es decir, **todos** los bloques de horario de un
-   curso quedan marcados con `grupo = 1`, sin importar si en realidad eran del
-   grupo `P1-G1`, `P2-G3`, etc. Para el choque de horarios esto importa mucho:
-   un estudiante solo se matricula en **un grupo** de cada curso, así que hay
-   que poder identificar qué bloques de horario pertenecen al mismo grupo (para
-   no comparar, por accidente, un grupo contra otro grupo del mismo curso, y
-   sobre todo para saber qué franjas van juntas cuando el estudiante elige un
-   grupo específico).
-
-   Sugerencia: cambiar `parsear_horario_str` para que extraiga el identificador
-   real (ej. `"P1-G1"`) del texto y lo guarde como texto en `Horario`, en vez de
-   pasar un entero fijo.
-
-Documenten en el README final cómo resolvieron esto — es justo el tipo de "caso
-límite real" que pide la rúbrica (sección 2.2.2 del enunciado).
+*Descripción:* Módulo encargado de comparar los bloques horarios de los cursos para identificar empalmes temporales en un mismo día de la semana.
 
 ---
 
-## 7. Tarea de Persona 3: detección de choques de horario
+## 6. Resolución de casos límite técnicos (Ajustes de la Etapa)
 
-**Objetivo:** para cada par de cursos (y cada par de grupos dentro de esos
-cursos), determinar si sus horarios se traslapan en el mismo día.
+1. **Ampliación del arreglo de horarios:** Durante las pruebas iniciales, el diseño contemplaba un tamaño estático limitado de 5 para el arreglo `horarios[5]`. Sin embargo, al procesar catálogos reales de la institución se identificaron materias con alta densidad de grupos simultáneos (como cursos del área de matemáticas con decenas de opciones). **Solución aplicada:** Se amplió la capacidad de almacenamiento estático a `Horario horarios[50]` dentro de `horarios.h` para blindar el programa ante desbordamientos de memoria y asegurar que ningún grupo quede fuera del análisis.
 
-**Sugerencia de módulo** (siguiendo el mismo patrón que `historial.h/.c`):
-
-```c
-// choques.h
-#ifndef CHOQUES_H
-#define CHOQUES_H
-#include "horarios.h"
-
-/* Compara dos bloques de horario y devuelve 1 si se traslapan
- * (mismo día y las horas se cruzan), 0 si no. */
-int horarios_chocan(Horario h1, Horario h2);
-
-/* Recorre todo el catálogo, compara cada curso contra los demás,
- * y llena el campo tiene_choque de cada Curso. */
-void detectar_choques_catalogo(Curso catalogo[], int total_cursos);
-
-#endif
-```
-
-**Lógica para comparar dos bloques de horario:**
-1. Si `h1.dias` y `h2.dias` son distintos (ej. `"MAR"` vs `"MIE"`), no chocan.
-2. Si son el mismo día, revisar si los rangos `[horainicio, horafin]` se
-   traslapan. Dos rangos `[A, B]` y `[C, D]` se traslapan si `A < D && C < B`
-   (hay que convertir `"HH:MM"` a minutos totales para comparar como números,
-   no como texto).
-
-**Integrar en `main.c`:** agregar `#include "choques.h"` y llamar
-`detectar_choques_catalogo(catalogo, total_cursos);` después de cargar el
-catálogo (no depende del historial ni de nada de Persona 2).
-
-**Dato de la Guía de Horarios:** hay cursos sin horario definido (campo
-`Horarios` vacío en el CSV, ej. `SE1100`, `CI1407`) — esos simplemente no
-generan bloques de `Horario` (`cant_horarios = 0`) y nunca chocan con nada;
-el código de Persona 1 ya los deja con `cant_horarios = 0`, así que la
-función de choques debe manejar ese caso sin fallar.
+2. **Cursos sin asignación de horario presencial:** Cursos especiales o seminarios (tales como `SE1100` o proyectos específicos) que poseen campos de horarios completamente vacíos se configuran explícitamente con `cant_horarios = 0`. Esto permite que la lógica de detección de choques los filtre de manera segura sin interrumpir la ejecución ni arrojar fallos de segmentación.
 
 ---
 
-## 8. Convenciones del proyecto
+## 7. Módulo implementado por la Persona 3: Detección de cruces de horario
 
-- Todo el código en C, paradigma imperativo (obligatorio, ver enunciado).
-- Uso obligatorio de `structs`.
-- Constantes (`maxcursos`, `maxstr`, `maxhistorial`, etc.) van en los `.h`,
-  no dispersas en el código.
-- Nombres de funciones y variables en español, `snake_case`.
-- Cada módulo tiene su `.h` con los prototipos que expone al resto del equipo.
+Se desarrolló e incorporó de forma integral el módulo `choques.c` y `choques.h` para garantizar que el sistema valide automáticamente si los bloques de clases de distintas opciones se traslapan temporalmente:
+
+- **Conversión matemática de horas:** Se implementó una función auxiliar interna denominada `hora_a_minutos`, la cual transforma de manera exacta el formato de cadena de texto `"HH:MM"` a una representación numérica entera basada en la cantidad total de minutos transcurridos desde la medianoche. Esto permite aplicar la fórmula lógica estándar de traslapo de intervalos (`A < D && C < B`) con absoluta precisión matemática.
+
+- **Validación integrada en el flujo principal:** Se añadió la llamada directa al procedimiento `detectar_choques_catalogo(catalogo, total_cursos);` dentro del archivo controlador `main.c`, evaluando de forma automatizada y transparente el total de los cursos cargados en memoria.
+
+---
+
+## 8. Convenciones generales de desarrollo del proyecto
+
+- **Paradigma:** Lenguaje C bajo un enfoque de programación imperativa estricta, cumpliendo con los lineamientos formales del curso.
+- **Uso de estructuras:** Utilización obligatoria de tipos de datos estructurados (`structs`) para modelar las entidades del dominio académico.
+- **Manejo de constantes:** Las dimensiones máximas y parámetros globales (`maxcursos`, `maxstr`, `maxhistorial`, etc.) se declaran centralizadamente en los archivos de cabecera (`.h`), evitando el uso de números mágicos dispersos por el código fuente.
+- **Nomenclatura:** Todos los identificadores de funciones, variables y atributos siguen rigurosamente el estándar en idioma español utilizando el formato de nomenclatura `snake_case`.
+- **Modularidad:** Cada módulo funcional expone limpiamente sus prototipos de funciones a través de su respectivo archivo de cabecera (`.h`), promoviendo el acoplamiento débil y la alta cohesión del software.
