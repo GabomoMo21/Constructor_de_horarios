@@ -2,6 +2,7 @@
 #include "horarios.h"
 #include "lector_horarios.h"   
 #include "historial.h"
+#include "choques.h"
 
 
 int main() {
@@ -23,6 +24,8 @@ int main() {
     printf("Cursos aprobados en el historial: %d\n\n", total_historial);
 
     validar_requisitos_catalogo(catalogo, total_cursos, historial, total_historial);
+
+    detectar_choques_catalogo(catalogo, total_cursos);
 
     for (int i = 0; i < total_cursos; i++) {
         printf("[%s] %s -> requisitos: %s | cumple_requisitos: %s | puede_matricular: %s\n",
