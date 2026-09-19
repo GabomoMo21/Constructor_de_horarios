@@ -28,12 +28,13 @@ int main() {
     detectar_choques_catalogo(catalogo, total_cursos);
 
     for (int i = 0; i < total_cursos; i++) {
-        printf("[%s] %s -> requisitos: %s | cumple_requisitos: %s | puede_matricular: %s\n",
+        printf("[%s] %s -> requisitos: %s | cumple_requisitos: %s | puede_matricular: %s | choque: %s\n",
                catalogo[i].codigo,
                catalogo[i].nombre,
                catalogo[i].requisitos,
                catalogo[i].cumple_requisitos ? "SI" : "NO",
-               catalogo[i].puede_matricular ? "SI" : "NO");
+               catalogo[i].puede_matricular ? "SI" : "NO",
+               catalogo[i].tiene_choque ? "SI" : "NO");
     }
     return 0;
 }
