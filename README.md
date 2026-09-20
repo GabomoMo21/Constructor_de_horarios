@@ -1,161 +1,149 @@
-# CEmestre — Etapa 1 (C) — Estado del proyecto
+# CEmestre
 
-Este README describe con todo detalle lo que ya está hecho (Persona 1, Persona 2 y Persona 3) para que Persona 4 (ciclos + exportación + documentación final) pueda arrancar sin tener que leer todo el código desde cero y comprendiendo la arquitectura completa del sistema.
+CEmestre es el proyecto del curso **Paradigmas de Programación (CE1106)**. La idea del proyecto es construir, por etapas, un sistema que ayude a preparar una matrícula a partir del plan de estudios, el historial del estudiante y los horarios disponibles.
 
----
+Cada etapa se trabaja como un programa independiente. En esta primera parte se utiliza **C** y el resultado que se genere servirá como entrada para la siguiente etapa del proyecto.
 
-## 1. Estructura y organización de archivos
+## Etapa 1 - C
 
-El proyecto se encuentra dividido modularmente para mantener una separación limpia de responsabilidades entre los integrantes del equipo:
+Esta etapa se encarga de cargar y organizar los datos de los cursos, leer el historial de cursos aprobados por el estudiante y hacer las validaciones necesarias antes de pasar la información a las siguientes partes del proyecto.
 
-- **`horarios.h`**: Contiene las estructuras de datos globales compartidas (`Curso`, `Horario`) y las constantes principales del sistema (como límites de arreglos y strings).
+El flujo general de esta etapa es:
 
-- **`horarios.csv`**: Archivo de entrada que contiene el catálogo completo de cursos recolectado por la Persona 1.
+1. Leer el catálogo desde `horarios.csv`.
+2. Leer los cursos aprobados desde `historial.csv`.
+3. Validar requisitos y correquisitos de cada curso.
+4. Revisar los horarios para detectar choques entre cursos y grupos.
+5. Revisar el grafo de requisitos con DFS para detectar ciclos.
+6. Exportar el catálogo procesado a un archivo que pueda usar la siguiente etapa.
 
-- **`historial.csv`**: Archivo de entrada que contiene los códigos de los cursos aprobados por el estudiante, gestionado por la Persona 2.
+Actualmente los primeros módulos ya existen y la estructura del repositorio se está preparando para integrar la detección de ciclos y la exportación sin mezclar responsabilidades entre archivos.
 
-- **`lector_horarios.h` y `lector_horarios.c`**: Módulo desarrollado por la Persona 1 encargado de la lectura robusta, carga en memoria y limpieza inicial del catálogo de cursos (`cargar_catalogo`).
+## Estructura del repositorio
 
-- **`historial.h` y `historial.c`**: Módulo desarrollado por la Persona 2 encargado de cargar el historial académico y validar de forma lógica el cumplimiento de requisitos y correquisitos.
+```text
+CEmestre/
+├── README.md
+├── .gitignore
+│
+├── etapa1_c/
+│   ├── main.c
+│   ├── constantes.h
+│   ├── estructuras.h
+│   ├── lector_horarios.c
+│   ├── lector_horarios.h
+│   ├── historial.c
+│   ├── historial.h
+│   ├── choques.c
+│   └── choques.h
+│
+└── datos/
+    ├── entrada/
+    │   ├── horarios.csv
+    │   └── historial.csv
+    │
+    └── salida/
+```
 
-- **`choques.h` y `choques.c`**: Módulo desarrollado por la Persona 3 encargado de la conversión de formatos de hora y la detección automatizada de cruces de horario entre los grupos del catálogo.
+La carpeta `etapa1_c` contiene solamente el código de la primera etapa. Los archivos de entrada y salida se mantienen en `datos` para no mezclar el código fuente con la información que procesa el programa.
 
-- **`main.c`**: Archivo principal que integra y ejecuta secuencialmente los módulos anteriores.
+Cuando se agreguen las siguientes etapas, cada una tendrá su propia carpeta. De esta forma el código de C, Racket, Prolog y Java puede mantenerse separado aunque todos formen parte del mismo proyecto.
 
-### Notas importantes sobre la compilación y desarrollo
+## Archivos principales
 
-Cada integrante trabaja exclusivamente en su propio par de archivos `.c` y `.h`. 
+| Archivo | Función |
+|---|---|
+| `main.c` | Coordina la ejecución de los diferentes módulos. |
+| `constantes.h` | Guarda los límites y constantes utilizados por el programa. |
+| `estructuras.h` | Contiene las estructuras compartidas, como `Curso` y `Horario`. |
+| `lector_horarios.c/.h` | Lee el catálogo y convierte los datos del CSV a las estructuras de C. |
+| `historial.c/.h` | Lee el historial del estudiante y valida requisitos y correquisitos. |
+| `choques.c/.h` | Compara bloques de horario para determinar si existe un choque. |
+| `datos/entrada/horarios.csv` | Catálogo recolectado de las dos carreras trabajadas por el grupo. |
+| `datos/entrada/historial.csv` | Códigos de los cursos que el estudiante ya aprobó. |
+| `datos/salida/` | Lugar donde se guardará el archivo producido por esta etapa. |
 
-Está estrictamente prohibido que los módulos individuales contengan su propia función `main()` dentro del repositorio final. 
+## Datos de entrada
 
-Para realizar pruebas independientes de cada módulo, se pueden crear archivos temporales auxiliares (por ejemplo, `main_prueba_personaX.c`), los cuales no deben subirse ni incluirse en la compilación final del equipo.
+### `horarios.csv`
 
-### Cómo compilar todo el proyecto hasta esta etapa
+El catálogo contiene información de **Ingeniería en Computadores** y **Ingeniería Ambiental**. Cada fila representa un curso dentro de una carrera y utiliza las siguientes columnas:
 
-Para compilar todos los módulos integrados mediante la línea de comandos con GCC, utiliza la siguiente instrucción:
+```text
+Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos
+```
 
-`gcc -Wall -o proyecto lector_horarios.c historial.c choques.c main.c`
+Los horarios incluyen el periodo, el grupo y uno o más bloques de día y hora. Por ejemplo:
 
-`./proyecto        # En sistemas Windows: .\proyecto.exe`
+```text
+P1-G1=MIE[07:30-09:20];VIE[07:30-09:20]
+```
 
----
+Esto representa el grupo 1 del periodo 1, con lecciones miércoles y viernes en el horario indicado.
 
-## 2. Formato detallado del archivo de entrada `horarios.csv`
+### `historial.csv`
 
-El archivo de catálogo utiliza un formato de valores separados por comas (CSV), asegurando que la primera línea corresponda estrictamente a los encabezados obligatorios:
+El historial es más simple. Contiene los códigos de los cursos que el estudiante ya aprobó:
 
-`Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos`
+```text
+Codigo
+MA0101
+CE1101
+CE1104
+```
 
-- **Requisitos / Correquisitos**: Se especifican mediante los códigos oficiales de los cursos separados por un punto y coma (por ejemplo: `CE1101;CE1104;MA1403`). En caso de que un curso no posea requisitos ni correquisitos previos, se debe indicar obligatoriamente con el texto literal `No hay`.
+Estos códigos se usan para comprobar los requisitos y correquisitos del catálogo.
 
-- **Horarios**: Los diferentes grupos disponibles para un curso se encuentran separados por una pleca con espacios (` | `). 
+## Cómo funciona el programa
 
-Cada bloque de horario de grupo mantiene la estructura interna siguiente:
+`main.c` funciona como punto de entrada y llama a los demás módulos. La intención es mantener ahí solamente el orden general del programa y dejar la lógica específica en su archivo correspondiente.
 
-`P1-G1=MIE[18:00-20:50];VIE[18:00-19:50]`
+Por ejemplo, la lectura del catálogo se realiza en `lector_horarios.c`, la revisión del historial en `historial.c` y la comparación de horarios en `choques.c`. Esto permite revisar o modificar una parte sin tener que concentrar todo el programa en un solo archivo.
 
-En esta nomenclatura, la estructura corresponde a: 
-`Periodo-Grupo = DIA[hora_inicio-hora_fin];DIA[hora_inicio-hora_fin];...`
+Para la detección de choques, dos bloques chocan cuando pertenecen al mismo día y sus rangos de hora se traslapan. Si un curso tiene varios grupos o varios bloques por grupo, se deben revisar todos los bloques cargados.
 
-Un mismo grupo académico puede impartirse presencialmente en múltiples días de la semana dentro de la misma semana (motivo por el cual se utiliza el punto y coma `;` para separar los días del mismo grupo). 
+Para los requisitos se utiliza el historial del estudiante. Cada requisito indicado para un curso se compara con los códigos de los cursos aprobados. Los correquisitos se manejan por separado porque forman parte de la validación de matrícula.
 
-Los días de la semana se abrevian estrictamente a 3 letras mayúsculas: `LUN`, `MAR`, `MIE`, `JUE`, `VIE`, `SAB`.
+## Decisiones tomadas hasta ahora
 
----
+Se utilizan **arreglos estáticos y `structs`** porque el tamaño del catálogo es pequeño y conocido. Esto mantiene la implementación sencilla y evita usar memoria dinámica donde no hace falta.
 
-## 3. Formato del archivo de entrada `historial.csv` (Persona 2)
+Las constantes se colocan en `constantes.h` para que los tamaños máximos no queden repetidos en varios archivos. Las estructuras compartidas se mantienen en `estructuras.h`, ya que son utilizadas por más de un módulo.
 
-Este archivo maneja un registro simplificado de los cursos que el estudiante ya ha superado con éxito en ciclos anteriores. Consiste en una única columna con el encabezado `Codigo`, listando un código alfanumérico por cada línea:
+También se separaron los datos del código fuente. Esta decisión es importante para las siguientes etapas, porque el archivo producido por C será consumido después por otro programa y no por funciones internas de esta misma etapa.
 
-`Codigo`
-`MA0101`
-`CE1101`
-`CE1104`
-`...`
+## Compilación
 
----
+Desde la raíz del repositorio se puede compilar la etapa actual con:
 
-## 4. Definición de Estructuras (`structs` en `horarios.h`)
+```bash
+gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c/main.c etapa1_c/lector_horarios.c etapa1_c/historial.c etapa1_c/choques.c -o cemestre
+```
 
-Para garantizar la interoperabilidad de los datos entre las distintas etapas del proyecto, se utilizan las siguientes estructuras base centralizadas en el archivo de cabecera común:
+En Windows se puede agregar la extensión `.exe` al nombre del ejecutable:
 
-typedef struct {
-    int grupo;
-    char dias[10];
-    char horainicio[6];   // Formato estricto de texto "HH:MM"
-    char horafin[6];      // Formato estricto de texto "HH:MM"
-} Horario;
+```bash
+gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c/main.c etapa1_c/lector_horarios.c etapa1_c/historial.c etapa1_c/choques.c -o cemestre.exe
+```
 
-typedef struct {
-    char codigo[10];
-    char nombre[maxstr];
-    int creditos;
-    char requisitos[maxstr];
-    char correquisitos[maxstr];
-    Horario horarios[50]; // Arreglo ampliado a 50 para soportar cursos masivos con múltiples grupos
-    int cant_horarios;
+## Ejecución
 
-    /* Campos de validación y estado llenados por la Persona 2 */
-    int cumple_requisitos;
-    int cumple_correquisitos;
-    int puede_matricular;
+El programa debe ejecutarse desde la raíz del repositorio para que las rutas relativas a `datos/entrada` y `datos/salida` funcionen correctamente.
 
-    /* Campos de validación lógica añadidos por la Persona 3 */
-    int tiene_choque;
-} Curso;
+Linux/macOS:
 
-El arreglo global `catalogo[]` (definido con un tamaño estático máximo de `maxcursos` = 100) representa la estructura de datos central sobre la cual iterarán y trabajarán de manera secuencial todas las etapas del sistema.
+```bash
+./cemestre
+```
 
----
+Windows:
 
-## 5. Especificación de funciones disponibles por módulo
+```text
+cemestre.exe
+```
 
-### Módulo `lector_horarios.h` (Persona 1)
+## Estado de desarrollo
 
-- `int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]);`
+La reorganización inicial del repositorio ya está hecha. Antes de completar la etapa todavía se debe adaptar la lectura al formato completo del catálogo actual, conservar correctamente los periodos y grupos, separar los cursos que comparten código entre carreras, implementar la detección de ciclos con DFS y generar el archivo de salida.
 
-*Descripción:* Lee el archivo CSV de catálogo, limpia los espacios vacíos y deserializa la información en el arreglo de structs. Retorna la cantidad total de cursos cargados de manera exitosa (o un valor de `-1` en caso de ocurrir un error crítico de lectura). Llena todos los atributos básicos del curso a excepción de los campos de validación lógica y cruces.
-
-### Módulo `historial.h` (Persona 2)
-
-- `int cargar_historial(const char *nombre_archivo, char historial[][10], int max_historial);`
-- `int esta_aprobado(char historial[][10], int total_historial, const char *codigo);`
-- `int cumple_lista_requisitos(const char *lista_str, char historial[][10], int total_historial);`
-- `void validar_requisitos_catalogo(Curso catalogo[], int total_cursos, char historial[][10], int total_historial);`
-
-*Descripción:* Conjunto de funciones utilitarias y de validación académica que cruzan el historial del estudiante contra los requisitos formales de cada materia del catálogo.
-
-### Módulo `choques.h` (Persona 3)
-
-- `int horarios_chocan(Horario h1, Horario h2);`
-- `void detectar_choques_catalogo(Curso catalogo[], int total_cursos);`
-
-*Descripción:* Módulo encargado de comparar los bloques horarios de los cursos para identificar empalmes temporales en un mismo día de la semana.
-
----
-
-## 6. Resolución de casos límite técnicos (Ajustes de la Etapa)
-
-1. **Ampliación del arreglo de horarios:** Durante las pruebas iniciales, el diseño contemplaba un tamaño estático limitado de 5 para el arreglo `horarios[5]`. Sin embargo, al procesar catálogos reales de la institución se identificaron materias con alta densidad de grupos simultáneos (como cursos del área de matemáticas con decenas de opciones). **Solución aplicada:** Se amplió la capacidad de almacenamiento estático a `Horario horarios[50]` dentro de `horarios.h` para blindar el programa ante desbordamientos de memoria y asegurar que ningún grupo quede fuera del análisis.
-
-2. **Cursos sin asignación de horario presencial:** Cursos especiales o seminarios (tales como `SE1100` o proyectos específicos) que poseen campos de horarios completamente vacíos se configuran explícitamente con `cant_horarios = 0`. Esto permite que la lógica de detección de choques los filtre de manera segura sin interrumpir la ejecución ni arrojar fallos de segmentación.
-
----
-
-## 7. Módulo implementado por la Persona 3: Detección de cruces de horario
-
-Se desarrolló e incorporó de forma integral el módulo `choques.c` y `choques.h` para garantizar que el sistema valide automáticamente si los bloques de clases de distintas opciones se traslapan temporalmente:
-
-- **Conversión matemática de horas:** Se implementó una función auxiliar interna denominada `hora_a_minutos`, la cual transforma de manera exacta el formato de cadena de texto `"HH:MM"` a una representación numérica entera basada en la cantidad total de minutos transcurridos desde la medianoche. Esto permite aplicar la fórmula lógica estándar de traslapo de intervalos (`A < D && C < B`) con absoluta precisión matemática.
-
-- **Validación integrada en el flujo principal:** Se añadió la llamada directa al procedimiento `detectar_choques_catalogo(catalogo, total_cursos);` dentro del archivo controlador `main.c`, evaluando de forma automatizada y transparente el total de los cursos cargados en memoria.
-
----
-
-## 8. Convenciones generales de desarrollo del proyecto
-
-- **Paradigma:** Lenguaje C bajo un enfoque de programación imperativa estricta, cumpliendo con los lineamientos formales del curso.
-- **Uso de estructuras:** Utilización obligatoria de tipos de datos estructurados (`structs`) para modelar las entidades del dominio académico.
-- **Manejo de constantes:** Las dimensiones máximas y parámetros globales (`maxcursos`, `maxstr`, `maxhistorial`, etc.) se declaran centralizadamente en los archivos de cabecera (`.h`), evitando el uso de números mágicos dispersos por el código fuente.
-- **Nomenclatura:** Todos los identificadores de funciones, variables y atributos siguen rigurosamente el estándar en idioma español utilizando el formato de nomenclatura `snake_case`.
-- **Modularidad:** Cada módulo funcional expone limpiamente sus prototipos de funciones a través de su respectivo archivo de cabecera (`.h`), promoviendo el acoplamiento débil y la alta cohesión del software.
+Esta sección se mantendrá mientras se desarrolla la etapa y se puede reemplazar por la documentación final cuando todas las partes estén integradas.
