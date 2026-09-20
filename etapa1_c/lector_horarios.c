@@ -164,6 +164,10 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
             ] = '\0';
 
             catalogo[pos].cant_horarios = 0;
+            catalogo[pos].cumple_requisitos = 0;
+            catalogo[pos].cumple_correquisitos = 0;
+            catalogo[pos].puede_matricular = 0;
+            catalogo[pos].tiene_choque = 0;
 
             total_cursos++;
         }
@@ -178,4 +182,3 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
     fclose(archivo);
 
     return total_cursos;
-}
