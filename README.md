@@ -104,7 +104,9 @@ Por ejemplo, la lectura del catálogo se realiza en `lector_horarios.c`, la revi
 
 Para la detección de choques, dos bloques chocan cuando pertenecen al mismo día y sus rangos de hora se traslapan. Si un curso tiene varios grupos o varios bloques por grupo, se deben revisar todos los bloques cargados.
 
-Para los requisitos se utiliza el historial del estudiante. Cada requisito indicado para un curso se compara con los códigos de los cursos aprobados. Los correquisitos se manejan por separado porque forman parte de la validación de matrícula.
+Para los requisitos se utiliza el historial del estudiante. Cada requisito indicado para un curso se compara con los códigos de los cursos aprobados.
+
+Los correquisitos se revisan aparte porque no siempre tienen que aparecer como cursos aprobados. Si el correquisito ya está en el historial se considera cumplido. Si no está aprobado, se busca dentro de la misma carrera y se revisa si cumple sus propios requisitos; en ese caso puede llevarse junto con el curso principal. Si el correquisito no está aprobado, no aparece en el catálogo o no cumple sus requisitos, el curso no queda habilitado para matrícula.
 
 ## Decisiones tomadas hasta ahora
 
@@ -115,6 +117,10 @@ Las constantes se colocan en `constantes.h` para que los tamaños máximos no qu
 El catálogo actual llega hasta **84 bloques de horario en un mismo curso**, por lo que se reservó espacio para 100 bloques por curso. También se aumentó el tamaño máximo de una línea del CSV a 4096 caracteres, porque algunos campos de horarios son bastante largos. Son límites fijos porque el archivo es pequeño y conocido, y así no hace falta usar memoria dinámica.
 
 Los requisitos y correquisitos vacíos del CSV se guardan como `No hay`. Esto permite que el resto del programa trate de la misma forma los registros vacíos y los que ya venían escritos de esa manera.
+
+Para la matrícula se hacen dos recorridos del catálogo. En el primero se revisan los requisitos de todos los cursos. En el segundo se revisan los correquisitos usando ese resultado. Se hizo así para poder reconocer correquisitos que todavía no están aprobados pero que sí podrían llevarse en el mismo periodo.
+
+Un caso concreto del catálogo es `FI1201` de Ingeniería en Computadores. El curso no tiene requisitos, pero tiene a `FI1101` como correquisito. Como `FI1101` requiere `MA1102` y ese curso no aparece aprobado en el historial actual, `FI1201` no queda habilitado para matrícula. En cambio, pares como `BI1106` y `BI1107` en Ingeniería Ambiental pueden llevarse juntos porque ninguno tiene requisitos previos y son correquisitos entre sí.
 
 También se separaron los datos del código fuente. Esta decisión es importante para las siguientes etapas, porque el archivo producido por C será consumido después por otro programa y no por funciones internas de esta misma etapa.
 
@@ -152,4 +158,6 @@ cemestre.exe
 
 La reorganización inicial del repositorio y la adaptación del lector al catálogo actual ya están hechas. El programa carga las 83 filas del CSV, conserva carrera, periodo y grupo, y puede leer todos los bloques de horario del archivo sin recortarlos.
 
-Todavía falta cerrar la forma en que se usarán los correquisitos para `puede_matricular`, implementar la detección de ciclos con DFS y generar el archivo de salida. Esta sección se mantendrá mientras se desarrolla la etapa y se puede reemplazar por la documentación final cuando todas las partes estén integradas.
+La carga del catálogo, la lectura del historial, la validación de requisitos y correquisitos y la detección de choques ya están integradas. `puede_matricular` queda en `SI` únicamente cuando el curso cumple sus requisitos y sus correquisitos pueden satisfacerse.
+
+Todavía falta implementar la detección de ciclos con DFS y generar el archivo de salida. Esta sección se mantendrá mientras se desarrolla la etapa y se puede reemplazar por la documentación final cuando todas las partes estén integradas.
