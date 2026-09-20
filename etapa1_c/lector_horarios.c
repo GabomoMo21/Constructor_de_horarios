@@ -120,7 +120,7 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
 
         if (pos == -1) {
 
-            if (total_cursos >= maxcursos)
+            if (total_cursos >= MAX_CURSOS)
                 continue;
 
             pos = total_cursos;
