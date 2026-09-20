@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include "estructuras.h"
-#include "lector_horarios.h"   
+#include "lector_horarios.h"
 #include "historial.h"
 #include "choques.h"
-
 
 int main() {
     Curso catalogo[MAX_CURSOS];
@@ -24,18 +23,20 @@ int main() {
     printf("Cursos aprobados en el historial: %d\n\n", total_historial);
 
     validar_requisitos_catalogo(catalogo, total_cursos, historial, total_historial);
-
     detectar_choques_catalogo(catalogo, total_cursos);
 
     for (int i = 0; i < total_cursos; i++) {
-        printf("[%s | %s] %s -> requisitos: %s | cumple_requisitos: %s | puede_matricular: %s | choque: %s\n",
-               catalogo[i].carrera,
-               catalogo[i].codigo,
-               catalogo[i].nombre,
+        printf("[%s | %s] %s\n", catalogo[i].carrera, catalogo[i].codigo, catalogo[i].nombre);
+        printf("  Requisitos: %s -> %s\n",
                catalogo[i].requisitos,
-               catalogo[i].cumple_requisitos ? "SI" : "NO",
+               catalogo[i].cumple_requisitos ? "SI" : "NO");
+        printf("  Correquisitos: %s -> %s\n",
+               catalogo[i].correquisitos,
+               catalogo[i].cumple_correquisitos ? "SI" : "NO");
+        printf("  Puede matricular: %s | Choque: %s\n\n",
                catalogo[i].puede_matricular ? "SI" : "NO",
                catalogo[i].tiene_choque ? "SI" : "NO");
     }
+
     return 0;
 }

@@ -46,12 +46,12 @@ int esta_aprobado(char historial[][MAX_CODIGO], int total_historial, const char 
             return 1;
         }
     }
+
     return 0;
 }
 
 int cumple_lista_requisitos(const char *lista_str, char historial[][MAX_CODIGO], int total_historial) {
-    // Un curso sin requisitos se puede validar directamente
-    if (strcmp(lista_str, "No hay") == 0) {
+    if (lista_str[0] == '\0' || strcmp(lista_str, "No hay") == 0) {
         return 1;
     }
 
@@ -71,14 +71,75 @@ int cumple_lista_requisitos(const char *lista_str, char historial[][MAX_CODIGO],
     return 1;
 }
 
+static int buscar_curso(Curso catalogo[], int total_cursos,
+                        const char *carrera, const char *codigo) {
+    for (int i = 0; i < total_cursos; i++) {
+        if (strcmp(catalogo[i].carrera, carrera) == 0 &&
+            strcmp(catalogo[i].codigo, codigo) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int correquisito_disponible(const char *codigo, const char *carrera,
+                                    Curso catalogo[], int total_cursos,
+                                    char historial[][MAX_CODIGO], int total_historial) {
+    if (esta_aprobado(historial, total_historial, codigo)) {
+        return 1;
+    }
+
+    int pos = buscar_curso(catalogo, total_cursos, carrera, codigo);
+
+    if (pos == -1) {
+        return 0;
+    }
+
+    // Si cumple sus requisitos, se puede llevar junto al curso principal
+    return catalogo[pos].cumple_requisitos;
+}
+
+static int cumple_lista_correquisitos(const char *lista_str, const char *carrera,
+                                      Curso catalogo[], int total_cursos,
+                                      char historial[][MAX_CODIGO], int total_historial) {
+    if (lista_str[0] == '\0' || strcmp(lista_str, "No hay") == 0) {
+        return 1;
+    }
+
+    char copia[MAX_STR];
+    strncpy(copia, lista_str, sizeof(copia) - 1);
+    copia[sizeof(copia) - 1] = '\0';
+
+    char *token = strtok(copia, ";");
+    while (token != NULL) {
+        if (!correquisito_disponible(token, carrera, catalogo, total_cursos,
+                                     historial, total_historial)) {
+            return 0;
+        }
+        token = strtok(NULL, ";");
+    }
+
+    return 1;
+}
+
 void validar_requisitos_catalogo(Curso catalogo[], int total_cursos,
                                   char historial[][MAX_CODIGO], int total_historial) {
+    // Primero se revisan los requisitos de todos los cursos
     for (int i = 0; i < total_cursos; i++) {
         catalogo[i].cumple_requisitos =
             cumple_lista_requisitos(catalogo[i].requisitos, historial, total_historial);
-        catalogo[i].cumple_correquisitos =
-            cumple_lista_requisitos(catalogo[i].correquisitos, historial, total_historial);
+    }
 
-        catalogo[i].puede_matricular = catalogo[i].cumple_requisitos;
+    // Luego se revisan los correquisitos usando el resultado anterior
+    for (int i = 0; i < total_cursos; i++) {
+        catalogo[i].cumple_correquisitos =
+            cumple_lista_correquisitos(catalogo[i].correquisitos,
+                                       catalogo[i].carrera,
+                                       catalogo, total_cursos,
+                                       historial, total_historial);
+
+        catalogo[i].puede_matricular =
+            catalogo[i].cumple_requisitos && catalogo[i].cumple_correquisitos;
     }
 }
