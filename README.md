@@ -305,3 +305,14 @@ Durante la revisión de esta etapa se comprobó que:
 ## Ejecutable para la revisión
 
 El repositorio ignora archivos compilados para no mezclar binarios con el código fuente durante el desarrollo.
+
+### Nota para Windows
+
+Si la terminal muestra caracteres extraños en palabras con tildes o `ñ`, se debe configurar la consola para usar UTF-8 antes de ejecutar el programa.
+
+En PowerShell:
+
+```powershell
+chcp 65001
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
