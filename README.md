@@ -302,7 +302,7 @@ Durante la revisión de esta etapa se comprobó que:
 - el DFS sí detecta un ciclo cuando se agrega uno temporalmente para la prueba;
 - el archivo de salida conserva las columnas definidas para la siguiente etapa.
 
-## Ejecutable para la revisión
+## Ejecutable
 
 El repositorio ignora archivos compilados para no mezclar binarios con el código fuente durante el desarrollo.
 
