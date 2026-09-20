@@ -304,4 +304,4 @@ Durante la revisión de esta etapa se comprobó que:
 
 ## Ejecutable para la revisión
 
-El repositorio ignora archivos compilados para no mezclar binarios con el código fuente durante el desarrollo. Antes de la defensa se debe generar el ejecutable en el equipo que se utilizará para la revisión usando el comando de compilación anterior.
+El repositorio ignora archivos compilados para no mezclar binarios con el código fuente durante el desarrollo.
