@@ -2,6 +2,7 @@
 #include "estructuras.h"
 #include "lector_horarios.h"
 #include "historial.h"
+#include "requisitos.h"
 #include "choques.h"
 
 int main() {
