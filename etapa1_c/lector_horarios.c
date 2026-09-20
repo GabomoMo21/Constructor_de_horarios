@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "lector_horarios.h"
+#include "catalogo.h"
 
 static void limpiar_cadena(char *texto) {
     int i = 0;
@@ -47,18 +48,6 @@ static int parsear_linea_csv(char *linea, char campos[][MAX_LINEA], int max_camp
     }
 
     return total_campos;
-}
-
-static int buscar_curso(Curso catalogo[], int total_cursos,
-                        const char *carrera, const char *codigo) {
-    for (int i = 0; i < total_cursos; i++) {
-        if (strcmp(catalogo[i].carrera, carrera) == 0 &&
-            strcmp(catalogo[i].codigo, codigo) == 0) {
-            return i;
-        }
-    }
-
-    return -1;
 }
 
 static void guardar_texto(char destino[], int tam_destino, const char *origen) {
