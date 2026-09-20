@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include "choques.h"
 
 static int hora_a_minutos(const char *hora_str) {
@@ -33,6 +32,7 @@ void detectar_choques_catalogo(Curso catalogo[], int total_cursos) {
 
         for (int j = 0; j < total_cursos; j++) {
             if (i == j) continue;
+            if (strcmp(catalogo[i].carrera, catalogo[j].carrera) != 0) continue;
             if (catalogo[j].cant_horarios == 0) continue;
 
             int encontro_cruce = 0;
