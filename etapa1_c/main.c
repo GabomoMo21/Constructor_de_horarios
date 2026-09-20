@@ -5,6 +5,7 @@
 #include "requisitos.h"
 #include "choques.h"
 #include "ciclos.h"
+#include "exportador.h"
 
 int main() {
     Curso catalogo[MAX_CURSOS];
@@ -29,6 +30,11 @@ int main() {
 
     detectar_ciclos_catalogo(catalogo, total_cursos);
     printf("\n");
+
+    if (exportar_catalogo("datos/salida/catalogo_procesado.csv", catalogo, total_cursos) != 0) {
+        return 1;
+    }
+    printf("Archivo de salida generado: datos/salida/catalogo_procesado.csv\n\n");
 
     for (int i = 0; i < total_cursos; i++) {
         printf("[%s | %s] %s\n", catalogo[i].carrera, catalogo[i].codigo, catalogo[i].nombre);
