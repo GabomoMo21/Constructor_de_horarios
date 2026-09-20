@@ -57,7 +57,7 @@ int cumple_lista_requisitos(const char *lista_str, char historial[][10], int tot
     }
 
     /* strtok modifica la cadena, así que trabajamos sobre una copia */
-    char copia[maxstr];
+    char copia[MAX_STR];
     strncpy(copia, lista_str, sizeof(copia) - 1);
     copia[sizeof(copia) - 1] = '\0';
 

@@ -1,22 +1,22 @@
 #include <stdio.h>
-#include "horarios.h"
+#include "estructuras.h"
 #include "lector_horarios.h"   
 #include "historial.h"
 #include "choques.h"
 
 
 int main() {
-    Curso catalogo[maxcursos];
-    char historial[maxhistorial][10];
+    Curso catalogo[MAX_CURSOS];
+    char historial[MAX_HISTORIAL][10];
 
-    int total_cursos = cargar_catalogo("horarios.csv", catalogo);
+    int total_cursos = cargar_catalogo("datos/entrada/horarios.csv", catalogo);
     if (total_cursos <= 0) {
         printf("Error: no se pudo cargar el catalogo.\n");
         return 1;
     }
     printf("Cursos cargados: %d\n", total_cursos);
 
-    int total_historial = cargar_historial("historial.csv", historial, maxhistorial);
+    int total_historial = cargar_historial("datos/entrada/historial.csv", historial, MAX_HISTORIAL);
     if (total_historial < 0) {
         printf("Error: no se pudo cargar el historial.\n");
         return 1;
