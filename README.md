@@ -17,7 +17,7 @@ El flujo general de esta etapa es:
 5. Revisar el grafo de requisitos con DFS para detectar ciclos.
 6. Exportar el catálogo procesado a un archivo que pueda usar la siguiente etapa.
 
-Los módulos de lectura, historial y choques ya están separados. El catálogo también conserva la carrera, el periodo y el grupo de cada bloque de horario, para que las validaciones posteriores trabajen con los datos completos. Todavía falta integrar la detección de ciclos y la exportación final.
+Los módulos de lectura, catálogo, historial, requisitos, choques y ciclos están separados según la tarea que realiza cada uno. El catálogo también conserva la carrera, el periodo y el grupo de cada bloque de horario, para que las validaciones trabajen con los datos completos. Todavía falta integrar la exportación final.
 
 ## Estructura del repositorio
 
@@ -32,10 +32,16 @@ CEmestre/
 │   ├── estructuras.h
 │   ├── lector_horarios.c
 │   ├── lector_horarios.h
+│   ├── catalogo.c
+│   ├── catalogo.h
 │   ├── historial.c
 │   ├── historial.h
+│   ├── requisitos.c
+│   ├── requisitos.h
 │   ├── choques.c
-│   └── choques.h
+│   ├── choques.h
+│   ├── ciclos.c
+│   └── ciclos.h
 │
 └── datos/
     ├── entrada/
@@ -57,8 +63,11 @@ Cuando se agreguen las siguientes etapas, cada una tendrá su propia carpeta. De
 | `constantes.h` | Guarda los límites y constantes utilizados por el programa. |
 | `estructuras.h` | Contiene las estructuras compartidas, como `Curso` y `Horario`. |
 | `lector_horarios.c/.h` | Lee el catálogo y convierte los datos del CSV a las estructuras de C. |
-| `historial.c/.h` | Lee el historial del estudiante y valida requisitos y correquisitos. |
+| `catalogo.c/.h` | Contiene operaciones sencillas que se reutilizan sobre el catálogo, como buscar un curso por carrera y código. |
+| `historial.c/.h` | Lee el historial del estudiante y permite consultar si un curso ya fue aprobado. |
+| `requisitos.c/.h` | Valida los requisitos, correquisitos y si cada curso puede matricularse. |
 | `choques.c/.h` | Compara bloques de horario para determinar si existe un choque. |
+| `ciclos.c/.h` | Recorre los requisitos con DFS para detectar dependencias cíclicas. |
 | `datos/entrada/horarios.csv` | Catálogo recolectado de las dos carreras trabajadas por el grupo. |
 | `datos/entrada/historial.csv` | Códigos de los cursos que el estudiante ya aprobó. |
 | `datos/salida/` | Lugar donde se guardará el archivo producido por esta etapa. |
@@ -100,9 +109,11 @@ Estos códigos se usan para comprobar los requisitos y correquisitos del catálo
 
 `main.c` funciona como punto de entrada y llama a los demás módulos. La intención es mantener ahí solamente el orden general del programa y dejar la lógica específica en su archivo correspondiente.
 
-Por ejemplo, la lectura del catálogo se realiza en `lector_horarios.c`, la revisión del historial en `historial.c` y la comparación de horarios en `choques.c`. Esto permite revisar o modificar una parte sin tener que concentrar todo el programa en un solo archivo.
+Por ejemplo, la lectura del catálogo se realiza en `lector_horarios.c`, la lectura del historial en `historial.c`, la validación de requisitos en `requisitos.c` y la comparación de horarios en `choques.c`. `catalogo.c` mantiene operaciones que necesitan varios módulos, como buscar un curso por carrera y código. Esto evita repetir la misma función en distintos archivos.
 
 Para la detección de choques, dos bloques chocan cuando pertenecen al mismo día y sus rangos de hora se traslapan. Si un curso tiene varios grupos o varios bloques por grupo, se deben revisar todos los bloques cargados.
+
+Para revisar ciclos se usa DFS sobre los requisitos. Cada curso se marca como no visitado, visitando o terminado. Si durante el recorrido se llega a un curso que todavía está marcado como visitando, existe un ciclo. Los requisitos se buscan dentro de la misma carrera para no mezclar planes de estudio. Si un requisito no forma parte del catálogo cargado, esa rama no puede seguirse y se ignora.
 
 Para los requisitos se utiliza el historial del estudiante. Cada requisito indicado para un curso se compara con los códigos de los cursos aprobados.
 
@@ -112,7 +123,7 @@ Los correquisitos se revisan aparte porque no siempre tienen que aparecer como c
 
 Se utilizan **arreglos estáticos y `structs`** porque el tamaño del catálogo es pequeño y conocido. Esto mantiene la implementación sencilla y evita usar memoria dinámica donde no hace falta.
 
-Las constantes se colocan en `constantes.h` para que los tamaños máximos no queden repetidos en varios archivos. Las estructuras compartidas se mantienen en `estructuras.h`, ya que son utilizadas por más de un módulo.
+Las constantes se colocan en `constantes.h` para que los tamaños máximos no queden repetidos en varios archivos. Las estructuras compartidas se mantienen en `estructuras.h`, ya que son utilizadas por más de un módulo. La función para buscar cursos se dejó en `catalogo.c` porque era necesaria en la lectura, la validación de requisitos y el DFS; así se evita mantener varias copias de la misma lógica.
 
 El catálogo actual llega hasta **84 bloques de horario en un mismo curso**, por lo que se reservó espacio para 100 bloques por curso. También se aumentó el tamaño máximo de una línea del CSV a 4096 caracteres, porque algunos campos de horarios son bastante largos. Son límites fijos porque el archivo es pequeño y conocido, y así no hace falta usar memoria dinámica.
 
@@ -122,6 +133,10 @@ Para la matrícula se hacen dos recorridos del catálogo. En el primero se revis
 
 Un caso concreto del catálogo es `FI1201` de Ingeniería en Computadores. El curso no tiene requisitos, pero tiene a `FI1101` como correquisito. Como `FI1101` requiere `MA1102` y ese curso no aparece aprobado en el historial actual, `FI1201` no queda habilitado para matrícula. En cambio, pares como `BI1106` y `BI1107` en Ingeniería Ambiental pueden llevarse juntos porque ninguno tiene requisitos previos y son correquisitos entre sí.
 
+Para el DFS no se construye una estructura de grafo adicional. El mismo catálogo funciona como grafo: cada curso es un nodo y los códigos guardados en `requisitos` indican a qué cursos apunta. Esto evita duplicar información y mantiene el recorrido sencillo para el tamaño actual del proyecto.
+
+En el catálogo actual no se encontraron ciclos. El código también se probó con un ciclo agregado temporalmente entre dos cursos para comprobar que el recorrido identifica y reporta los cursos involucrados.
+
 También se separaron los datos del código fuente. Esta decisión es importante para las siguientes etapas, porque el archivo producido por C será consumido después por otro programa y no por funciones internas de esta misma etapa.
 
 ## Compilación
@@ -129,13 +144,13 @@ También se separaron los datos del código fuente. Esta decisión es importante
 Desde la raíz del repositorio se puede compilar la etapa actual con:
 
 ```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c/main.c etapa1_c/lector_horarios.c etapa1_c/historial.c etapa1_c/choques.c -o cemestre
+gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c/main.c etapa1_c/catalogo.c etapa1_c/lector_horarios.c etapa1_c/historial.c etapa1_c/requisitos.c etapa1_c/choques.c etapa1_c/ciclos.c -o cemestre
 ```
 
 En Windows se puede agregar la extensión `.exe` al nombre del ejecutable:
 
 ```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c/main.c etapa1_c/lector_horarios.c etapa1_c/historial.c etapa1_c/choques.c -o cemestre.exe
+gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c/main.c etapa1_c/catalogo.c etapa1_c/lector_horarios.c etapa1_c/historial.c etapa1_c/requisitos.c etapa1_c/choques.c etapa1_c/ciclos.c -o cemestre.exe
 ```
 
 ## Ejecución
@@ -158,6 +173,8 @@ cemestre.exe
 
 La reorganización inicial del repositorio y la adaptación del lector al catálogo actual ya están hechas. El programa carga las 83 filas del CSV, conserva carrera, periodo y grupo, y puede leer todos los bloques de horario del archivo sin recortarlos.
 
-La carga del catálogo, la lectura del historial, la validación de requisitos y correquisitos y la detección de choques ya están integradas. `puede_matricular` queda en `SI` únicamente cuando el curso cumple sus requisitos y sus correquisitos pueden satisfacerse.
+La carga del catálogo, la lectura del historial, la validación de requisitos y correquisitos, la detección de choques y la detección de ciclos ya están integradas. `puede_matricular` queda en `SI` únicamente cuando el curso cumple sus requisitos y sus correquisitos pueden satisfacerse.
 
-Todavía falta implementar la detección de ciclos con DFS y generar el archivo de salida. Esta sección se mantendrá mientras se desarrolla la etapa y se puede reemplazar por la documentación final cuando todas las partes estén integradas.
+El DFS revisa los requisitos por carrera y reporta los cursos involucrados si encuentra un ciclo. Con el catálogo actual no se detectan ciclos.
+
+Todavía falta generar el archivo de salida de la etapa. Esta sección se mantendrá mientras se desarrolla el proyecto y se puede reemplazar por la documentación final cuando todas las partes estén integradas.

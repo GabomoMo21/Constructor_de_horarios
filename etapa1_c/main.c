@@ -4,6 +4,7 @@
 #include "historial.h"
 #include "requisitos.h"
 #include "choques.h"
+#include "ciclos.h"
 
 int main() {
     Curso catalogo[MAX_CURSOS];
@@ -25,6 +26,9 @@ int main() {
 
     validar_requisitos_catalogo(catalogo, total_cursos, historial, total_historial);
     detectar_choques_catalogo(catalogo, total_cursos);
+
+    detectar_ciclos_catalogo(catalogo, total_cursos);
+    printf("\n");
 
     for (int i = 0; i < total_cursos; i++) {
         printf("[%s | %s] %s\n", catalogo[i].carrera, catalogo[i].codigo, catalogo[i].nombre);
