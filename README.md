@@ -114,9 +114,13 @@ Por ejemplo, `FI1101` aparece en las dos carreras y sus condiciones no son igual
 
 ### Lectura de horarios
 
-En el catálogo existen cursos con muchos grupos y bloques de horario. Por ejemplo, cursos como `MA1102` tienen decenas de bloques disponibles. Por esta razón se reservó espacio para hasta `MAX_HORARIOS` bloques por curso y una línea suficientemente amplia para leer los campos largos del CSV.
+En el catálogo existen cursos con muchos grupos y bloques de horario. Por esta razón se reservó espacio para hasta `MAX_HORARIOS` bloques por curso y una línea suficientemente amplia para leer los campos largos del CSV.
 
-El lector no depende de que todos los grupos usen exactamente el mismo separador. Busca las marcas de periodo y grupo, como `P1-G2=`, y después reconoce los bloques con formato `DIA[hora-hora]`.
+Los horarios se recorren de izquierda a derecha. Primero se reconoce el periodo y grupo, por ejemplo `P1-G2=`, y después se identifican sus bloques con formato `DIA[hora-hora]`.
+
+Para reconocer los datos se utiliza `sscanf`. Una vez encontrado un grupo o un bloque, se busca el carácter que marca su final, como `=` para el encabezado del grupo y `]` para un bloque de horario, y la lectura continúa desde la siguiente posición.
+
+De esta forma el lector no depende de que todos los grupos utilicen exactamente el mismo separador y puede conservar por separado el periodo, grupo, día, hora de inicio y hora final.
 
 ### Requisitos y correquisitos
 
@@ -136,6 +140,8 @@ Dos bloques chocan cuando se encuentran el mismo día y sus rangos de hora se tr
 
 Un curso queda con `TieneChoque = SI` cuando al menos uno de sus bloques se cruza con un bloque de otro curso de la misma carrera. El programa revisa todos los grupos cargados antes de asignar este indicador.
 
+Este resultado no selecciona el mejor horario ni elimina cursos. Su función es dejar marcada la información de conflicto para que las siguientes etapas puedan trabajar con las combinaciones de grupos.
+
 ### Detección de ciclos
 
 Para los grupos de cuatro integrantes se implementó DFS sobre el grafo de requisitos. No se crea una estructura de grafo adicional: el catálogo ya contiene las relaciones necesarias porque cada curso guarda sus requisitos.
@@ -151,6 +157,8 @@ Cada curso utiliza uno de tres estados durante el recorrido:
 Si durante el DFS se llega a un curso que todavía está en estado `visitando`, se encontró un ciclo. El programa marca y reporta los cursos involucrados.
 
 Si un requisito no forma parte del catálogo de los primeros semestres cargados, el DFS no puede continuar por esa rama y simplemente sigue con los demás requisitos.
+
+El objetivo de esta validación es detectar dependencias imposibles en los datos, por ejemplo que un curso dependa directa o indirectamente de sí mismo.
 
 ## Decisiones específicas del dataset
 
@@ -229,7 +237,7 @@ La etapa genera:
 datos/salida/catalogo_procesado.csv
 ```
 
-Se eligió CSV porque mantiene una estructura sencilla, es fácil de revisar y puede ser leído posteriormente por Racket sin depender del programa en C.
+Se eligió CSV porque la información del catálogo es naturalmente tabular: cada fila representa un curso y las columnas almacenan sus propiedades. También permite leer y escribir los datos desde C sin utilizar librerías externas y deja un formato sencillo para que la siguiente etapa pueda consumirlo.
 
 Cada fila incluye:
 
@@ -247,7 +255,9 @@ P1-G1=MIE[07:30-09:20];VIE[07:30-09:20] | P1-G2=LUN[10:00-11:50]
 
 Los campos de texto se escriben entre comillas para evitar que una coma dentro del texto cambie la cantidad de columnas. `TieneChoque` y `PuedeMatricular` se exportan como `SI` o `NO`.
 
-El archivo se escribe en UTF-8 y usa coma como separador. Si Excel no reconoce automáticamente la codificación o el separador, puede importarse desde **Datos > Desde texto/CSV**, seleccionando **UTF-8** y **coma**. No es necesario modificar el archivo para utilizarlo en la siguiente etapa.
+Los archivos se mantienen en UTF-8 para conservar correctamente tildes, `ñ` y otros caracteres del español. Esto no cambia la estructura del CSV y permite que la siguiente etapa trabaje con los mismos textos.
+
+Si el archivo se abre en Excel únicamente para revisarlo, se recomienda importarlo desde **Datos > Desde texto/CSV**, seleccionando **UTF-8** y **coma** como separador. Para trabajar con el proyecto no es necesario convertirlo a otro formato.
 
 ## Manejo de errores y límites
 
@@ -259,60 +269,72 @@ También existen límites definidos en `constantes.h`. Si el catálogo, historia
 
 El programa debe compilarse desde la raíz del repositorio.
 
-Linux/macOS:
+### Linux/macOS
 
 ```bash
 gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c/main.c etapa1_c/catalogo.c etapa1_c/lector_horarios.c etapa1_c/historial.c etapa1_c/requisitos.c etapa1_c/choques.c etapa1_c/ciclos.c etapa1_c/exportador.c -o cemestre
 ```
 
-Windows:
+### Windows
 
-```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c/main.c etapa1_c/catalogo.c etapa1_c/lector_horarios.c etapa1_c/historial.c etapa1_c/requisitos.c etapa1_c/choques.c etapa1_c/ciclos.c etapa1_c/exportador.c -o cemestre.exe
+```powershell
+gcc -std=c11 -Wall -Wextra -Wpedantic etapa1_c\main.c etapa1_c\catalogo.c etapa1_c\lector_horarios.c etapa1_c\historial.c etapa1_c\requisitos.c etapa1_c\choques.c etapa1_c\ciclos.c etapa1_c\exportador.c -o cemestre.exe
 ```
 
 ## Ejecución
 
-El programa se ejecuta desde la raíz para que las rutas relativas funcionen correctamente.
+El programa se ejecuta desde la raíz del repositorio para que las rutas relativas funcionen correctamente.
 
-Linux/macOS:
+### Linux/macOS
 
 ```bash
 ./cemestre
 ```
 
-Windows:
+### Windows
 
-```text
-cemestre.exe
+```powershell
+.\cemestre.exe
 ```
 
-Al finalizar se genera `datos/salida/catalogo_procesado.csv`.
+Al finalizar se genera:
+
+```text
+datos/salida/catalogo_procesado.csv
+```
 
 ## Pruebas realizadas
 
 Durante la revisión de esta etapa se comprobó que:
 
 - el proyecto compila con `-Wall -Wextra -Wpedantic` sin advertencias;
-- todos los registros del catálogo se cargan y se vuelven a exportar;
+- los registros del catálogo se cargan y se vuelven a exportar;
 - los bloques de horario se conservan con su periodo y grupo;
 - los códigos compartidos entre carreras se mantienen separados;
 - un correquisito ya aprobado se acepta como cumplido;
+- un bloque que termina exactamente cuando empieza otro no se considera choque;
 - el DFS no reporta ciclos en el catálogo actual;
 - el DFS sí detecta un ciclo cuando se agrega uno temporalmente para la prueba;
 - el archivo de salida conserva las columnas definidas para la siguiente etapa.
 
-## Ejecutable
+## Nota para Windows
 
-El repositorio ignora archivos compilados para no mezclar binarios con el código fuente durante el desarrollo.
-
-### Nota para Windows
-
-Si la terminal muestra caracteres extraños en palabras con tildes o `ñ`, se debe configurar la consola para usar UTF-8 antes de ejecutar el programa.
-
-En PowerShell:
+Los archivos del proyecto utilizan UTF-8 para conservar correctamente los caracteres en español. Si la terminal muestra caracteres extraños en palabras con tildes o `ñ`, se puede configurar PowerShell antes de ejecutar el programa:
 
 ```powershell
 chcp 65001
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
+```
+
+Después se ejecuta normalmente:
+
+```powershell
+.\cemestre.exe
+```
+
+Esta configuración solo cambia la forma en que Windows muestra los caracteres en la terminal. No modifica los datos del programa ni los archivos CSV.
+
+## Ejecutable para la revisión
+
+Para la revisión se debe contar con un ejecutable funcional generado a partir de la versión final del código. Se recomienda compilarlo y probarlo en el mismo equipo que se utilizará durante la defensa.
