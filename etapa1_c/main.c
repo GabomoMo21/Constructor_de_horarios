@@ -35,19 +35,5 @@ int main() {
         return 1;
     }
     printf("Archivo de salida generado: datos/salida/catalogo_procesado.csv\n\n");
-
-    for (int i = 0; i < total_cursos; i++) {
-        printf("[%s | %s] %s\n", catalogo[i].carrera, catalogo[i].codigo, catalogo[i].nombre);
-        printf("  Requisitos: %s -> %s\n",
-               catalogo[i].requisitos,
-               catalogo[i].cumple_requisitos ? "SI" : "NO");
-        printf("  Correquisitos: %s -> %s\n",
-               catalogo[i].correquisitos,
-               catalogo[i].cumple_correquisitos ? "SI" : "NO");
-        printf("  Puede matricular: %s | Choque: %s\n\n",
-               catalogo[i].puede_matricular ? "SI" : "NO",
-               catalogo[i].tiene_choque ? "SI" : "NO");
-    }
-
     return 0;
 }
