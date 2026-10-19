@@ -4,36 +4,72 @@
 ;; CEmestre - Etapa 2
 ;; Tipos y estructuras compartidas
 ;;
-;; Este archivo funciona como contrato entre los distintos
-;; módulos de la etapa en Racket.
+;; Este archivo funciona como contrato entre los modulos
+;; de la etapa 2.
 ;;
 ;; IMPORTANTE:
 ;; - No se utilizan estructuras mutables.
-;; - Si se cambia una estructura, debe avisarse al grupo porque
-;;   puede afectar varios módulos.
+;; - Si se modifica alguna estructura, debe coordinarse
+;;   con el resto del grupo porque puede afectar otros modulos.
 ;; ============================================================
 
 
-;; Permite que los demás archivos puedan utilizar las estructuras.
+;; Permite que los demas archivos puedan utilizar
+;; estas estructuras.
 
 (provide
- (struct-out IdGrupo)
  (struct-out Horario)
+ (struct-out IdGrupo)
  (struct-out Grupo)
- (struct-out Curso)
  (struct-out Preferencias)
- (struct-out Seleccion)
  (struct-out Combinacion))
+
+
+;; ============================================================
+;; Horario
+;; ============================================================
+;; Representa un unico bloque horario de un grupo.
+;;
+;; dia:
+;;   Dia en el que se imparte el bloque.
+;;
+;; inicio:
+;;   Hora de inicio convertida a minutos desde las 00:00.
+;;
+;; fin:
+;;   Hora final convertida a minutos desde las 00:00.
+;;
+;; Ejemplo:
+;;
+;; MIE 07:30 - 09:20
+;;
+;; 07:30 -> 450
+;; 09:20 -> 560
+;;
+;; (Horario "MIE" 450 560)
+;;
+;; Guardar las horas como enteros facilita la comparacion
+;; de horarios en compatibilidad.rkt.
+
+(struct Horario
+  ([dia : String]
+   [inicio : Integer]
+   [fin : Integer])
+  #:transparent)
 
 
 ;; ============================================================
 ;; IdGrupo
 ;; ============================================================
-;; Identifica un grupo específico.
+;; Identifica de forma unica un grupo.
 ;;
-;; Se utiliza carrera + código + periodo + grupo porque un mismo
-;; código puede aparecer en carreras diferentes y un mismo número
-;; de grupo puede aparecer en distintos periodos.
+;; Un grupo se identifica utilizando:
+;;
+;; carrera + codigo + periodo + grupo
+;;
+;; Esto evita confundir:
+;; - cursos con el mismo codigo en carreras diferentes
+;; - grupos con el mismo numero en periodos diferentes
 ;;
 ;; Ejemplo:
 ;;
@@ -43,7 +79,8 @@
 ;;   1
 ;;   3)
 ;;
-;; Representa:
+;; representa:
+;;
 ;; CE1101 - P1-G3
 
 (struct IdGrupo
@@ -55,135 +92,100 @@
 
 
 ;; ============================================================
-;; Horario
-;; ============================================================
-;; Representa un único bloque horario.
-;;
-;; Las horas se almacenan como minutos desde las 00:00.
-;;
-;; Ejemplo:
-;;
-;; 07:30 -> 450
-;; 09:20 -> 560
-;;
-;; (Horario "MIE" 450 560)
-
-(struct Horario
-  ([dia : String]
-   [inicio : Integer]
-   [fin : Integer])
-  #:transparent)
-
-
-;; ============================================================
 ;; Grupo
 ;; ============================================================
-;; Representa un grupo específico de un curso.
+;; Representa una opcion concreta que puede seleccionarse
+;; al construir un horario.
 ;;
-;; id:
-;;   Identificación del grupo.
+;; carrera:
+;;   Carrera a la que pertenece el curso.
+;;
+;; codigo:
+;;   Codigo del curso.
+;;
+;; periodo:
+;;   Periodo del grupo (P1, P2, etc.).
+;;
+;; numero:
+;;   Numero del grupo (G1, G2, etc.).
+;;
+;; creditos:
+;;   Creditos correspondientes al curso.
 ;;
 ;; horarios:
-;;   Todos los bloques horarios que pertenecen al grupo.
+;;   Lista de todos los bloques horarios del grupo.
 ;;
-;; choques-con:
-;;   Lista de grupos con los que este grupo presenta choque.
+;; Ejemplo conceptual:
 ;;
-;; Ejemplo:
+;; CE1101 - P1-G3 - 4 creditos
 ;;
-;; CE1101 P1-G1
-;;   MIE 07:30-09:20
-;;   VIE 07:30-09:20
+;; MIE 07:30-09:20
+;; VIE 07:30-09:20
+;;
+;; se representa como un Grupo que contiene dos Horario.
+;;
+;; Solo deberian llegar al resto del programa grupos de
+;; cursos habilitados para matricular.
 
 (struct Grupo
-  ([id : IdGrupo]
-   [horarios : (Listof Horario)]
-   [choques-con : (Listof IdGrupo)])
-  #:transparent)
-
-
-;; ============================================================
-;; Curso
-;; ============================================================
-;; Representa un curso completo.
-;;
-;; requisitos:
-;;   Lista de códigos de requisitos.
-;;
-;; correquisitos:
-;;   Lista de códigos de correquisitos.
-;;
-;; Si un curso no tiene requisitos o correquisitos se utiliza:
-;;
-;; '()
-;;
-;; en vez del texto "No hay".
-;;
-;; puede-matricular?:
-;;   Resultado de la validación realizada previamente en C.
-;;
-;; grupos:
-;;   Todos los grupos disponibles para ese curso.
-
-(struct Curso
   ([carrera : String]
    [codigo : String]
-   [nombre : String]
+   [periodo : Integer]
+   [numero : Integer]
    [creditos : Integer]
-   [requisitos : (Listof String)]
-   [correquisitos : (Listof String)]
-   [puede-matricular? : Boolean]
-   [grupos : (Listof Grupo)])
+   [horarios : (Listof Horario)])
   #:transparent)
 
 
 ;; ============================================================
 ;; Preferencias
 ;; ============================================================
-;; Representa las preferencias indicadas por el estudiante.
+;; Representa las condiciones indicadas por el estudiante
+;; para una ejecucion del programa.
+;;
+;; carrera:
+;;   Carrera sobre la cual se generaran las combinaciones.
 ;;
 ;; grupos-interes:
-;;   Grupos que el estudiante está interesado en matricular.
+;;   Lista de grupos que el estudiante esta dispuesto
+;;   a considerar.
+;;
+;; Puede haber varios grupos del mismo curso.
 ;;
 ;; creditos-min:
-;;   Cantidad mínima de créditos deseada.
+;;   Cantidad minima de creditos deseada.
 ;;
 ;; creditos-max:
-;;   Cantidad máxima de créditos deseada.
+;;   Cantidad maxima de creditos deseada.
 
 (struct Preferencias
-  ([grupos-interes : (Listof IdGrupo)]
+  ([carrera : String]
+   [grupos-interes : (Listof IdGrupo)]
    [creditos-min : Integer]
    [creditos-max : Integer])
   #:transparent)
 
 
 ;; ============================================================
-;; Seleccion
-;; ============================================================
-;; Representa la selección de UN grupo para UN curso.
-;;
-;; Será utilizada principalmente durante la generación de
-;; combinaciones.
-
-(struct Seleccion
-  ([curso : Curso]
-   [grupo : Grupo])
-  #:transparent)
-
-
-;; ============================================================
 ;; Combinacion
 ;; ============================================================
-;; Representa una combinación de horario.
+;; Representa una combinacion de horario generada.
 ;;
-;; selecciones:
-;;   Lista de los cursos/grupos seleccionados.
+;; grupos:
+;;   Grupos seleccionados para la combinacion.
+;;
+;; Debe existir como maximo un grupo de cada curso.
 ;;
 ;; creditos-totales:
-;;   Suma de créditos de todos los cursos incluidos.
+;;   Suma de los creditos de todos los cursos incluidos.
+;;
+;; Esta estructura sera utilizada principalmente por:
+;;
+;; generador.rkt
+;; filtros.rkt
+;; exportador.rkt
 
 (struct Combinacion
-  ([selecciones : (Listof Seleccion)]
+  ([grupos : (Listof Grupo)]
    [creditos-totales : Integer])
   #:transparent)
