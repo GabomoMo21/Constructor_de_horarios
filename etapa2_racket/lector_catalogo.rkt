@@ -1,4 +1,6 @@
-#lang racket
+#lang typed/racket
+(require "tipos.rkt")
+(require racket/file)
 
 (define (hora-a-minutos hora)
   (define partes (string-split hora ":"))
@@ -31,3 +33,26 @@
          (string-split horarios ";")))
 
   (Grupo carrera codigo periodo grupo creditos lista-horarios))
+
+(define (parsear-grupos texto carrera codigo creditos)
+  (define grupos (string-split texto "|"))
+
+  (map
+   (lambda (x)
+     (texto-a-grupo carrera codigo creditos (string-trim x)))
+   grupos))
+
+(define (procesar-fila linea)
+  (define datos (string-split linea "," #:trim? #f))
+
+  (define carrera (string-trim (list-ref datos 0)))
+  (define codigo (string-trim (list-ref datos 1)))
+  (define creditos
+    (string->number (string-trim (list-ref datos 2))))
+  (define puede-matricular
+    (string-upcase (string-trim (list-ref datos 3))))
+  (define horarios (string-trim (list-ref datos 4)))
+
+  (if (string=? puede-matricular "SI")
+      (parsear-grupos horarios carrera codigo creditos)
+      empty))
