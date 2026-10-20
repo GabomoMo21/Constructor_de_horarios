@@ -25,11 +25,15 @@
               (list (Combinacion (list a-p1) 4)
                     (Combinacion (list a-p2) 0)))
 
+;; Se puede consumir una alternativa sin convertir todo el stream en lista.
+(check-equal? (stream-first (generar-combinaciones (list a-p1 a-p2) preferencias))
+              (Combinacion (list a-p1) 4))
+
 ;; Sin grupos de interés habilitados no se emite la combinación vacía.
 (check-true (stream-empty? (generar-combinaciones (list b) preferencias)))
 
-;; No devolver una búsqueda parcial cuando haya varios cursos de interés.
-(check-exn exn:fail?
+;; No devolver una búsqueda parcial ni combinaciones sin comprobar choques.
+(check-exn #rx"compatibilidad de varios cursos"
            (lambda ()
              (generar-combinaciones
               (list a-p1 b)
