@@ -325,12 +325,12 @@ Desde la raíz de este repositorio, compila el generador y el archivo de pruebas
 ```powershell
 raco make etapa2_racket/generador.rkt
 raco make etapa2_racket/tests/test_generador.rkt
-raco test etapa2_racket/tests/test_generador.rkt
+raco test etapa2_racket/generador.rkt etapa2_racket/tests/test_generador.rkt
 ```
 
-`raco make` normalmente no imprime nada cuando compila sin errores; **no ejecuta las pruebas**. `raco test` sí las ejecuta y debe mostrar `3 tests passed`. Si `raco` no está en PATH, sustituye `raco` en cada comando por `& 'C:\Program Files\Racket\raco.exe'` (ajustando la ruta a tu instalación).
+`raco make` normalmente no imprime nada cuando compila sin errores; **no ejecuta las pruebas**. `raco test` sí las ejecuta y debe mostrar `11 tests passed`. Las pruebas internas de `generador.rkt` ejercitan la búsqueda de varios cursos con una función de compatibilidad simulada; las pruebas de `tests/test_generador.rkt` comprueban la interfaz pública. Si `raco` no está en PATH, sustituye `raco` en cada comando por `& 'C:\Program Files\Racket\raco.exe'` (ajustando la ruta a tu instalación).
 
-La firma tipada actual del generador devuelve `(Sequenceof Combinacion)`, que es la representación que emplea esta biblioteca para los streams. El módulo genera streams, no listas completas; `Sequenceof` por sí solo admite otras secuencias, por lo que los futuros filtros y exportador deben mantener el consumo perezoso. `ETAPA2_PLAN.md` aún muestra `Streamof Combinacion` como firma conceptual: coordinar su actualización y las firmas de los módulos consumidores con el equipo. La integración de varios cursos y choques sigue pendiente.
+La firma tipada actual del generador devuelve `(Sequenceof Combinacion)`, que es la representación que emplea esta biblioteca para los streams. El módulo genera streams, no listas completas; `Sequenceof` por sí solo admite otras secuencias, por lo que los futuros filtros y exportador deben mantener el consumo perezoso. `ETAPA2_PLAN.md` aún muestra `Streamof Combinacion` como firma conceptual: coordinar su actualización y las firmas de los módulos consumidores con el equipo. La búsqueda interna ya contempla varios cursos, subconjuntos y una función de compatibilidad; la interfaz pública sigue rechazando varios cursos hasta integrar la implementación de `compatibilidad.rkt`, para no entregar resultados con choques.
 
 Antes de agregar cualquier otra dependencia o requisito de instalación, consúltalo con el equipo. Si se aprueba, documenta en este apartado qué parte del código lo necesita, qué hay que instalar y cómo comprobarlo.
 
