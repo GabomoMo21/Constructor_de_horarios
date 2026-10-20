@@ -306,6 +306,34 @@ Durante la revisión de esta etapa se comprobó que:
 
 El repositorio ignora archivos compilados para no mezclar binarios con el código fuente durante el desarrollo.
 
+## Dependencias adicionales de la etapa 2
+
+La etapa 1 solo requiere un compilador C11. Para trabajar con la etapa 2 se necesita Racket con Typed Racket y `raco`. En Windows, si Racket está instalado pero `raco` no se reconoce en PowerShell, agrega su carpeta (por ejemplo, `C:\Program Files\Racket`) a `Path` y abre otra terminal.
+
+### `typed-racket-stream` — generador de combinaciones
+
+`etapa2_racket/generador.rkt` construye combinaciones perezosamente con `stream-cons` y `empty-stream`; `etapa2_racket/tests/test_generador.rkt` consume esos streams para comprobar los resultados. Ambos usan `typed/racket/stream`, que proporciona estas operaciones con tipos para `#lang typed/racket`. Instala el paquete una vez por instalación de Racket:
+
+```powershell
+raco pkg install --auto typed-racket-stream
+```
+
+Las pruebas importan además `typed/rackunit` (paquete `rackunit-typed`), incluido en la instalación de Racket 9.3 comprobada. Si tu instalación no lo incluye, consulta antes de agregarlo como nuevo requisito y documéntalo aquí.
+
+Desde la raíz de este repositorio, compila el generador y el archivo de pruebas, y luego ejecuta las pruebas con:
+
+```powershell
+raco make etapa2_racket/generador.rkt
+raco make etapa2_racket/tests/test_generador.rkt
+raco test etapa2_racket/tests/test_generador.rkt
+```
+
+`raco make` normalmente no imprime nada cuando compila sin errores; **no ejecuta las pruebas**. `raco test` sí las ejecuta y debe mostrar `3 tests passed`. Si `raco` no está en PATH, sustituye `raco` en cada comando por `& 'C:\Program Files\Racket\raco.exe'` (ajustando la ruta a tu instalación).
+
+La firma tipada actual del generador devuelve `(Sequenceof Combinacion)`, que es la representación que emplea esta biblioteca para los streams. El módulo genera streams, no listas completas; `Sequenceof` por sí solo admite otras secuencias, por lo que los futuros filtros y exportador deben mantener el consumo perezoso. `ETAPA2_PLAN.md` aún muestra `Streamof Combinacion` como firma conceptual: coordinar su actualización y las firmas de los módulos consumidores con el equipo. La integración de varios cursos y choques sigue pendiente.
+
+Antes de agregar cualquier otra dependencia o requisito de instalación, consúltalo con el equipo. Si se aprueba, documenta en este apartado qué parte del código lo necesita, qué hay que instalar y cómo comprobarlo.
+
 ### Nota para Windows
 
 Si la terminal muestra caracteres extraños en palabras con tildes o `ñ`, se debe configurar la consola para usar UTF-8 antes de ejecutar el programa.
