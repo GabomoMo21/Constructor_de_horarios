@@ -1,7 +1,6 @@
 #lang typed/racket
 
-(require typed/racket/stream
-         "tipos.rkt"
+(require "tipos.rkt"
          "lector_catalogo.rkt"
          "lector_preferencias.rkt"
          "generador.rkt"
@@ -16,7 +15,7 @@
   (define grupos (leer-catalogo ruta-catalogo))
   (define preferencias (leer-preferencias ruta-preferencias))
   (define combinaciones
-    (sequence->stream (generar-combinaciones grupos preferencias)))
+    (generar-combinaciones grupos preferencias))
   (define validas
     (filtrar-por-creditos
      combinaciones
