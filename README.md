@@ -77,13 +77,13 @@ La separación se hizo por responsabilidad. `main.c` mantiene el orden general d
 Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos
 ```
 
-Los horarios conservan el periodo, el grupo y sus bloques de día y hora. Por ejemplo:
+Los horarios conservan el grupo y sus bloques de día y hora. Por ejemplo:
 
 ```text
-P1-G1=MIE[07:30-09:20];VIE[07:30-09:20]
+G1=MIE[07:30-09:20];VIE[07:30-09:20]
 ```
 
-El lector guarda cada bloque por separado, pero mantiene el periodo y grupo al que pertenece.
+El lector guarda cada bloque por separado, pero mantiene el grupo al que pertenece. Los números de grupo son únicos dentro de cada curso.
 
 ### Historial
 
@@ -116,7 +116,7 @@ Por ejemplo, `FI1101` aparece en las dos carreras y sus condiciones no son igual
 
 En el catálogo existen cursos con muchos grupos y bloques de horario. Por ejemplo, cursos como `MA1102` tienen decenas de bloques disponibles. Por esta razón se reservó espacio para hasta `MAX_HORARIOS` bloques por curso y una línea suficientemente amplia para leer los campos largos del CSV.
 
-El lector no depende de que todos los grupos usen exactamente el mismo separador. Busca las marcas de periodo y grupo, como `P1-G2=`, y después reconoce los bloques con formato `DIA[hora-hora]`.
+El lector no depende de que todos los grupos usen exactamente el mismo separador. Busca las marcas de grupo, como `G2=`, y después reconoce los bloques con formato `DIA[hora-hora]`.
 
 ### Requisitos y correquisitos
 
@@ -157,7 +157,8 @@ Si un requisito no forma parte del catálogo de los primeros semestres cargados,
 Durante la limpieza y adaptación del catálogo se tomaron algunas decisiones a partir de los datos reales:
 
 - Se conserva la carrera porque hay códigos compartidos entre los dos planes de estudio.
-- Se conserva el periodo y grupo de cada bloque para no perder información de matrícula.
+- Se conserva el grupo de cada bloque para no perder información de matrícula.
+- Se eliminó el período (`P1`/`P2`) del catálogo y de las estructuras. Originalmente un grupo se identificaba como `P1-G1`, pero el mismo número de grupo se repetía entre períodos y el período no aportaba información útil para armar combinaciones, solo complicaba la identificación. El equipo renumeró los grupos para que sean únicos dentro de cada curso (`G1`, `G2`…), de modo que un grupo queda identificado por carrera, código y número.
 - Los requisitos o correquisitos vacíos se normalizan internamente como `No hay`.
 - Se aumentaron los límites de lectura porque algunos cursos tienen campos de horario extensos y una gran cantidad de bloques.
 - `Prueba Avanzada Inglés` aparecía sin código en una versión del catálogo y se corrigió a `CI0205` después de verificar el dato.
@@ -177,7 +178,6 @@ Este mismo criterio se utiliza en la validación de correquisitos y en el DFS pa
 Guarda un bloque específico de un grupo:
 
 ```c
-int periodo;
 int grupo;
 char dias[10];
 char horainicio[6];
@@ -239,10 +239,10 @@ Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,TieneChoque,Pue
 
 Se agregó `Carrera` porque es necesaria para distinguir códigos compartidos entre los dos planes.
 
-Los horarios se guardan en un solo campo conservando periodo, grupo, día y hora:
+Los horarios se guardan en un solo campo conservando grupo, día y hora:
 
 ```text
-P1-G1=MIE[07:30-09:20];VIE[07:30-09:20] | P1-G2=LUN[10:00-11:50]
+G1=MIE[07:30-09:20];VIE[07:30-09:20] | G2=LUN[10:00-11:50]
 ```
 
 Los campos de texto se escriben entre comillas para evitar que una coma dentro del texto cambie la cantidad de columnas. `TieneChoque` y `PuedeMatricular` se exportan como `SI` o `NO`.
@@ -295,7 +295,7 @@ Durante la revisión de esta etapa se comprobó que:
 
 - el proyecto compila con `-Wall -Wextra -Wpedantic` sin advertencias;
 - todos los registros del catálogo se cargan y se vuelven a exportar;
-- los bloques de horario se conservan con su periodo y grupo;
+- los bloques de horario se conservan con su grupo;
 - los códigos compartidos entre carreras se mantienen separados;
 - un correquisito ya aprobado se acepta como cumplido;
 - el DFS no reporta ciclos en el catálogo actual;
@@ -323,14 +323,13 @@ Las pruebas importan además `typed/rackunit` (paquete `rackunit-typed`), inclui
 Desde la raíz de este repositorio, compila el generador y el archivo de pruebas, y luego ejecuta las pruebas con:
 
 ```powershell
-raco make etapa2_racket/generador.rkt
-raco make etapa2_racket/tests/test_generador.rkt
-raco test etapa2_racket/generador.rkt etapa2_racket/tests/test_generador.rkt
+raco make etapa2_racket/compatibilidad.rkt etapa2_racket/generador.rkt etapa2_racket/tests/test_compatibilidad.rkt etapa2_racket/tests/test_generador.rkt
+raco test etapa2_racket/compatibilidad.rkt etapa2_racket/generador.rkt etapa2_racket/tests/test_compatibilidad.rkt etapa2_racket/tests/test_generador.rkt
 ```
 
-`raco make` normalmente no imprime nada cuando compila sin errores; **no ejecuta las pruebas**. `raco test` sí las ejecuta y debe mostrar `11 tests passed`. Las pruebas internas de `generador.rkt` ejercitan la búsqueda de varios cursos con una función de compatibilidad simulada; las pruebas de `tests/test_generador.rkt` comprueban la interfaz pública. Si `raco` no está en PATH, sustituye `raco` en cada comando por `& 'C:\Program Files\Racket\raco.exe'` (ajustando la ruta a tu instalación).
+`raco make` normalmente no imprime nada cuando compila sin errores; **no ejecuta las pruebas**. `raco test` sí las ejecuta y debe mostrar `25 tests passed`. Las pruebas internas de `generador.rkt` usan funciones de compatibilidad simuladas para observar qué ramas se exploran (incluida la poda temprana); las pruebas de `tests/test_generador.rkt` comprueban la interfaz pública con la compatibilidad real. Si `raco` no está en PATH, sustituye `raco` en cada comando por `& 'C:\Program Files\Racket\raco.exe'` (ajustando la ruta a tu instalación).
 
-La firma tipada actual del generador devuelve `(Sequenceof Combinacion)`, que es la representación que emplea esta biblioteca para los streams. El módulo genera streams, no listas completas; `Sequenceof` por sí solo admite otras secuencias, por lo que los futuros filtros y exportador deben mantener el consumo perezoso. `ETAPA2_PLAN.md` aún muestra `Streamof Combinacion` como firma conceptual: coordinar su actualización y las firmas de los módulos consumidores con el equipo. La búsqueda interna ya contempla varios cursos, subconjuntos y una función de compatibilidad; la interfaz pública sigue rechazando varios cursos hasta integrar la implementación de `compatibilidad.rkt`, para no entregar resultados con choques.
+La firma tipada actual del generador devuelve `(Sequenceof Combinacion)`, que es la representación que emplea esta biblioteca para los streams. El módulo genera streams, no listas completas; `Sequenceof` por sí solo admite otras secuencias, por lo que los filtros y el exportador deben mantener el consumo perezoso. Typed Racket no define un tipo `Streamof`, por lo que el equipo acordó usar `Sequenceof` en todas las firmas. `generar-combinaciones` acepta varios cursos y consulta `compatible-con-combinacion?` (de `compatibilidad.rkt`) antes de agregar cada grupo, descartando la rama en cuanto detecta un choque.
 
 Antes de agregar cualquier otra dependencia o requisito de instalación, consúltalo con el equipo. Si se aprueba, documenta en este apartado qué parte del código lo necesita, qué hay que instalar y cómo comprobarlo.
 
