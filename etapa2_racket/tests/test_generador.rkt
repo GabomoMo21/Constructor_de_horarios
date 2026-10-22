@@ -70,3 +70,74 @@
                               0 18)))
               (list (Combinacion (list d-varios) 2)
                     (Combinacion (list a-g1) 4)))
+
+;; Un interés repetido en las preferencias no duplica combinaciones.
+(check-equal? (stream->list
+               (generar-combinaciones
+                (list a-g1 b)
+                (Preferencias "Computadores"
+                              (list (IdGrupo "Computadores" "CE1101" 1)
+                                    (IdGrupo "Computadores" "CE1101" 1)
+                                    (IdGrupo "Computadores" "CE1102" 1))
+                              0 18)))
+              (list (Combinacion (list b) 3)
+                    (Combinacion (list a-g1) 4)
+                    (Combinacion (list a-g1 b) 7)))
+
+;; Los intereses sin grupo en el catálogo (inexistentes o no habilitados)
+;; se ignoran sin inventar grupos.
+(check-equal? (stream->list
+               (generar-combinaciones
+                (list a-g1)
+                (Preferencias "Computadores"
+                              (list (IdGrupo "Computadores" "CE1101" 1)
+                                    (IdGrupo "Computadores" "CE1101" 3)
+                                    (IdGrupo "Computadores" "CE1104" 1))
+                              0 18)))
+              (list (Combinacion (list a-g1) 4)))
+
+;; Un interés de otra carrera no se mezcla, aunque comparta código y número.
+(check-equal? (stream->list
+               (generar-combinaciones
+                (list a-g1 otra-carrera)
+                (Preferencias "Computadores"
+                              (list (IdGrupo "Computadores" "CE1101" 1)
+                                    (IdGrupo "Software" "CE1101" 1))
+                              0 18)))
+              (list (Combinacion (list a-g1) 4)))
+(check-equal? (stream->list
+               (generar-combinaciones
+                (list a-g1 otra-carrera)
+                (Preferencias "Software"
+                              (list (IdGrupo "Software" "CE1101" 1))
+                              0 18)))
+              (list (Combinacion (list otra-carrera) 4)))
+
+;; Propiedades sobre todas las combinaciones de varios cursos: sin repetidas,
+;; un grupo por curso, créditos correctos y ninguna vacía.
+(: curso-de (-> Grupo (Pairof String String)))
+(define (curso-de grupo)
+  (cons (Grupo-carrera grupo) (Grupo-codigo grupo)))
+
+(define todas
+  (stream->list
+   (generar-combinaciones
+    (list a-g1 a-g2 b c-choque c-contiguo d-varios)
+    (Preferencias "Computadores"
+                  (list (IdGrupo "Computadores" "CE1101" 1)
+                        (IdGrupo "Computadores" "CE1101" 2)
+                        (IdGrupo "Computadores" "CE1102" 1)
+                        (IdGrupo "Computadores" "CE1102" 2)
+                        (IdGrupo "Computadores" "CE1103" 1))
+                  0 18))))
+
+(check-equal? (length todas) (length (remove-duplicates todas)))
+(check-true
+ (andmap (lambda ([combinacion : Combinacion])
+           (define grupos (Combinacion-grupos combinacion))
+           (and (not (empty? grupos))
+                (= (length grupos)
+                   (length (remove-duplicates (map curso-de grupos))))
+                (= (Combinacion-creditos-totales combinacion)
+                   (apply + (map Grupo-creditos grupos)))))
+         todas))
