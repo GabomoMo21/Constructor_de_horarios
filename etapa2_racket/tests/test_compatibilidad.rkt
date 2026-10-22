@@ -33,17 +33,17 @@
 ;; ============================================================
 
 (define grupoA
-  (Grupo "Computadores" "CE1101" 1 1 4
+  (Grupo "Computadores" "CE1101" 1 4
          (list (Horario "LUN" 480 600)
                (Horario "MIE" 540 660))))
 
 (define grupoB
-  (Grupo "Computadores" "MA1102" 1 1 4
+  (Grupo "Computadores" "MA1102" 1 4
          (list (Horario "MAR" 480 600)
                (Horario "MIE" 600 720))))
 
 (define grupoC
-  (Grupo "Computadores" "FI1101" 1 1 3
+  (Grupo "Computadores" "FI1101" 1 3
          (list (Horario "JUE" 480 600))))
 
 (check-true
@@ -53,7 +53,7 @@
  (grupos-chocan? grupoA grupoC))
 
 (define grupoVacio
-  (Grupo "Computadores" "QU1101" 1 1 3 '()))
+  (Grupo "Computadores" "QU1101" 1 3 '()))
 
 (check-false
  (grupos-chocan? grupoA grupoVacio))
@@ -70,7 +70,7 @@
  (compatible-con-combinacion? grupoB (list grupoA)))
 
 (define grupoA2
-  (Grupo "Computadores" "CE1101" 1 2 4
+  (Grupo "Computadores" "CE1101" 2 4
          (list (Horario "VIE" 480 600))))
 
 (check-false

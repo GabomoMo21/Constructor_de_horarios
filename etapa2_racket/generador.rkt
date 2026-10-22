@@ -13,7 +13,6 @@
 (define (id-de-grupo grupo)
   (IdGrupo (Grupo-carrera grupo)
            (Grupo-codigo grupo)
-           (Grupo-periodo grupo)
            (Grupo-numero grupo)))
 
 (: grupo-de-interes? (-> Grupo Preferencias Boolean))
@@ -114,16 +113,16 @@
 (module+ test
   (require typed/rackunit)
 
-  (define a1 (Grupo "Computadores" "A" 1 1 4 '()))
-  (define a2 (Grupo "Computadores" "A" 2 1 0 '()))
-  (define b1 (Grupo "Computadores" "B" 1 1 3 '()))
-  (define b2 (Grupo "Computadores" "B" 1 2 3 '()))
+  (define a1 (Grupo "Computadores" "A" 1 4 '()))
+  (define a2 (Grupo "Computadores" "A" 2 0 '()))
+  (define b1 (Grupo "Computadores" "B" 1 3 '()))
+  (define b2 (Grupo "Computadores" "B" 2 3 '()))
   (define cursos (agrupar-opciones (list a1 b1 a2 b2)))
 
   (check-equal? cursos (list (list a1 a2) (list b1 b2)))
   (check-equal?
-   (agrupar-opciones (list a1 (Grupo "Ambiental" "A" 1 1 4 '())))
-   (list (list a1) (list (Grupo "Ambiental" "A" 1 1 4 '()))))
+   (agrupar-opciones (list a1 (Grupo "Ambiental" "A" 1 4 '())))
+   (list (list a1) (list (Grupo "Ambiental" "A" 1 4 '()))))
   ;; Omitir cada curso y elegir una alternativa, sin repetir curso ni vacío.
   (check-equal?
    (stream->list (explorar-cursos cursos '() 0
@@ -173,9 +172,9 @@
 
   ;; Poda temprana: tras detectar el choque de x1 con y1 no se consulta el
   ;; curso siguiente con esa pareja ya elegida.
-  (define x1 (Grupo "Computadores" "X" 1 1 3 (list (Horario "LUN" 480 600))))
-  (define y1 (Grupo "Computadores" "Y" 1 1 3 (list (Horario "LUN" 540 660))))
-  (define z1 (Grupo "Computadores" "Z" 1 1 2 (list (Horario "MAR" 480 600))))
+  (define x1 (Grupo "Computadores" "X" 1 3 (list (Horario "LUN" 480 600))))
+  (define y1 (Grupo "Computadores" "Y" 1 3 (list (Horario "LUN" 540 660))))
+  (define z1 (Grupo "Computadores" "Z" 1 2 (list (Horario "MAR" 480 600))))
   (check-equal?
    (stream->list
     (explorar-cursos (list (list x1) (list y1) (list z1)) '() 0
