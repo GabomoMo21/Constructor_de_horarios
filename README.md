@@ -306,6 +306,67 @@ Durante la revisión de esta etapa se comprobó que:
 
 El repositorio ignora archivos compilados para no mezclar binarios con el código fuente durante el desarrollo.
 
+## Etapa 2: generación de combinaciones (`generador.rkt`)
+
+El generador recibe los grupos habilitados que entrega `lector_catalogo.rkt` y las preferencias que entrega `lector_preferencias.rkt`, y produce, como stream, las combinaciones de grupos de interés que no tienen choques. El filtro por créditos y el exportador consumen ese stream después.
+
+```text
+leer-catalogo ─────┐
+leer-preferencias ─┴─→ generar-combinaciones ─→ filtrar-por-creditos ─→ exportar-combinaciones
+                                │
+                                └─ consulta compatible-con-combinacion? (compatibilidad.rkt)
+```
+
+La función pública es:
+
+```racket
+(: generar-combinaciones (-> (Listof Grupo) Preferencias (Sequenceof Combinacion)))
+```
+
+### Funcionamiento
+
+1. `seleccionar-opciones` conserva solo los grupos de la carrera de las preferencias que aparecen en la lista de interés. Si un grupo viene repetido, se toma una sola vez.
+2. `agrupar-opciones` reúne esas opciones por curso, `(carrera, codigo)`, respetando el orden del catálogo. El resultado es una lista de cursos, y cada curso es la lista de sus grupos alternativos.
+3. `explorar-cursos` y `explorar-opciones` recorren el árbol de decisiones de forma recursiva. Para cada curso hay una rama que lo **omite** y una rama por cada **grupo** que se puede elegir. Al llegar al final se emite la combinación solo si se eligió al menos un grupo.
+
+Por ejemplo, con los cursos A (grupos A1 y A2) y B (grupo B1) el orden de salida es: `B1`, `A1`, `A1+B1`, `A2`, `A2+B1`. Si `A1` choca con `B1`, la rama `A1+B1` no se explora.
+
+### Decisiones de diseño
+
+- **Stream construido directamente.** Las combinaciones se producen con `stream-cons` y `empty-stream` durante la recursión, sin crear antes una lista completa. `concatenar` une el stream de una rama con una función (*thunk*) que calcula la rama siguiente, de modo que esa rama solo se explora cuando alguien pide más elementos. Pedir la primera combinación no calcula las demás.
+- **Poda temprana.** Antes de descender por un grupo, se consulta `compatible-con-combinacion?` con los grupos ya elegidos. Si hay choque, la rama se abandona en ese momento y no se construye ninguna combinación que la contenga.
+- **Compatibilidad como parámetro.** La búsqueda recibe la función de compatibilidad como argumento. La interfaz pública usa la función real de `compatibilidad.rkt` y las pruebas internas usan funciones simuladas para observar qué ramas se exploran.
+- **Subconjuntos.** Siguiendo el plan del equipo, un curso de interés puede quedar fuera de una combinación; nunca se elige más de un grupo por curso y nunca se emite la combinación vacía.
+- **Una sola carrera.** Los grupos o intereses de otra carrera se ignoran aunque compartan código y número, para no mezclar planes de estudio.
+- **Inmutabilidad.** El estado de la búsqueda (cursos pendientes, grupos elegidos y créditos acumulados) viaja como argumentos de la recursión; no se usa `set!` ni estructuras mutables.
+- **`Sequenceof`.** Typed Racket no define un tipo `Streamof`; `typed/racket/stream` tipa los streams como `Sequenceof`, y el equipo usa ese tipo en todas las firmas.
+
+### Estructuras de datos
+
+| Estructura | Uso en el generador |
+|---|---|
+| `Grupo` | Opción elegible: carrera, código, número, créditos y bloques `Horario`. |
+| `IdGrupo` | Identifica un grupo de interés como `(carrera, codigo, grupo)` y sirve para eliminar repetidos. |
+| `Preferencias` | Carrera y lista de `IdGrupo` de interés; el rango de créditos lo usa el filtro. |
+| `(Listof (Listof Grupo))` | Cursos agrupados: cada sublista son las alternativas de un curso. |
+| `Combinacion` | Grupos elegidos y sus créditos totales, acumulados durante la recursión. |
+
+### Caso límite real
+
+Al principio un grupo se identificaba por `(carrera, codigo, periodo, numero)`, porque el catálogo usaba marcas como `P1-G1` y `P2-G1`, que comparten número. Durante la integración el equipo eliminó el período y renumeró los grupos para que sean únicos por curso. Las pruebas del generador mostraron el efecto: dos grupos que antes se distinguían solo por el período pasaban a tener el mismo `IdGrupo` y se habrían tomado como repetidos. Se adaptó `id-de-grupo` y los datos de prueba se reescribieron con números distintos por curso.
+
+### Pruebas
+
+`tests/test_generador.rkt` y el submódulo `test` de `generador.rkt` comprueban:
+
+- una combinación por alternativa, combinaciones individuales y conjuntas, y que nunca aparece la vacía;
+- que un choque elimina solo la pareja afectada, que los bloques contiguos son compatibles y que basta un bloque traslapado de un grupo con varios bloques;
+- créditos cero, intereses repetidos, inexistentes o de otra carrera, y códigos iguales en carreras distintas;
+- propiedades sobre todas las combinaciones: sin repetidas, un grupo por curso y créditos correctos;
+- consumo parcial del stream y poda temprana (una compatibilidad simulada falla si se consulta una rama que ya contiene un choque).
+
+Con el catálogo real y 4 cursos de Ingeniería en Computadores (59 grupos de interés), el generador produjo 9578 combinaciones, todas sin choques y con los créditos correctos.
+
 ## Dependencias adicionales de la etapa 2
 
 La etapa 1 solo requiere un compilador C11. Para trabajar con la etapa 2 se necesita Racket con Typed Racket y `raco`. En Windows, si Racket está instalado pero `raco` no se reconoce en PowerShell, agrega su carpeta (por ejemplo, `C:\Program Files\Racket`) a `Path` y abre otra terminal.
