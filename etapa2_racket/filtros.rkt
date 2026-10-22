@@ -9,7 +9,7 @@
 
 ;; Permite filtrar streams con distintas condiciones.
 (: filtrar-stream
-   (All (A) (-> (-> A Boolean) (Streamof A) (Streamof A))))
+   (All (A) (-> (-> A Boolean) (Sequenceof A) (Sequenceof A))))
 (define (filtrar-stream condicion elementos)
   (stream-filter condicion elementos))
 
@@ -19,7 +19,7 @@
        (<= (Combinacion-creditos-totales combinacion) maximo)))
 
 (: filtrar-por-creditos
-   (-> (Streamof Combinacion) Integer Integer (Streamof Combinacion)))
+   (-> (Sequenceof Combinacion) Integer Integer (Sequenceof Combinacion)))
 (define (filtrar-por-creditos combinaciones minimo maximo)
   (filtrar-stream
    (lambda ([combinacion : Combinacion])

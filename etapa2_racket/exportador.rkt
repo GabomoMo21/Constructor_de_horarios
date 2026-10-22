@@ -36,7 +36,7 @@
   (void))
 
 ;; Escribe cada combinacion cuando llega del stream.
-(: escribir-combinaciones (-> (Streamof Combinacion) Boolean Void))
+(: escribir-combinaciones (-> (Sequenceof Combinacion) Boolean Void))
 (define (escribir-combinaciones combinaciones primero?)
   (cond
     [(stream-empty? combinaciones) (void)]
@@ -45,7 +45,7 @@
      (escribir-combinacion (stream-first combinaciones))
      (escribir-combinaciones (stream-rest combinaciones) #f)]))
 
-(: exportar-combinaciones (-> Path-String (Streamof Combinacion) Void))
+(: exportar-combinaciones (-> Path-String (Sequenceof Combinacion) Void))
 (define (exportar-combinaciones ruta combinaciones)
   (with-output-to-file ruta
     (lambda ()
