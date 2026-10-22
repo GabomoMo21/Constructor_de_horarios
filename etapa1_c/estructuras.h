@@ -4,7 +4,6 @@
 #include "constantes.h"
 
 typedef struct {
-    int periodo;
     int grupo;
     char dias[10];
     char horainicio[6];
