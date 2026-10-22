@@ -1,31 +1,48 @@
 #lang typed/racket
 
-(require racket/stream
+(require typed/racket/stream
          typed/json
          "tipos.rkt")
 
 (provide exportar-combinaciones)
 
-(: grupo->json (-> Grupo JSExpr))
-(define (grupo->json grupo)
-  (hash 'carrera (Grupo-carrera grupo)
-        'codigo (Grupo-codigo grupo)
-        'periodo (Grupo-periodo grupo)
-        'grupo (Grupo-numero grupo)))
+(: escribir-grupo (-> Grupo Void))
+(define (escribir-grupo grupo)
+  (display "{\"carrera\":")
+  (write-json (Grupo-carrera grupo))
+  (display ",\"codigo\":")
+  (write-json (Grupo-codigo grupo))
+  (display ",\"grupo\":")
+  (write-json (Grupo-numero grupo))
+  (display "}")
+  (void))
 
-(: combinacion->json (-> Combinacion JSExpr))
-(define (combinacion->json combinacion)
-  (hash 'creditos_totales (Combinacion-creditos-totales combinacion)
-        'selecciones (map grupo->json (Combinacion-grupos combinacion))))
+(: escribir-grupos (-> (Listof Grupo) Boolean Void))
+(define (escribir-grupos grupos primero?)
+  (cond
+    [(empty? grupos) (void)]
+    [else
+     (if primero? (void) (display ","))
+     (escribir-grupo (first grupos))
+     (escribir-grupos (rest grupos) #f)]))
 
-;; Escribe las combinaciones sin convertir el stream en una lista.
+(: escribir-combinacion (-> Combinacion Void))
+(define (escribir-combinacion combinacion)
+  (display "{\"creditos_totales\":")
+  (write-json (Combinacion-creditos-totales combinacion))
+  (display ",\"selecciones\":[")
+  (escribir-grupos (Combinacion-grupos combinacion) #t)
+  (display "]}")
+  (void))
+
+;; Escribe cada combinacion cuando llega del stream.
 (: escribir-combinaciones (-> (Streamof Combinacion) Boolean Void))
 (define (escribir-combinaciones combinaciones primero?)
   (cond
     [(stream-empty? combinaciones) (void)]
     [else
      (if primero? (void) (display ","))
-     (write-json (combinacion->json (stream-first combinaciones)))
+     (escribir-combinacion (stream-first combinaciones))
      (escribir-combinaciones (stream-rest combinaciones) #f)]))
 
 (: exportar-combinaciones (-> Path-String (Streamof Combinacion) Void))
