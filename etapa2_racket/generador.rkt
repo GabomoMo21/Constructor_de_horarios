@@ -1,12 +1,13 @@
 #lang typed/racket
 
 (require typed/racket/stream
-         "tipos.rkt")
+         "tipos.rkt"
+         "compatibilidad.rkt")
 
 (provide generar-combinaciones)
 
-;; La búsqueda por varios cursos permanece privada hasta integrar compatibilidad.
-;; La entrada pública rechaza esos casos para no emitir horarios con choques.
+;; Cada grupo se compara con los ya elegidos antes de descender por su rama,
+;; de modo que una combinación con choque nunca llega a construirse.
 
 (: id-de-grupo (-> Grupo IdGrupo))
 (define (id-de-grupo grupo)
@@ -105,17 +106,11 @@
 
 (: generar-combinaciones (-> (Listof Grupo) Preferencias (Sequenceof Combinacion)))
 (define (generar-combinaciones grupos preferencias)
-  (define cursos (agrupar-opciones (seleccionar-opciones grupos preferencias)))
-  (cond
-    [(empty? cursos) empty-stream]
-    [(not (empty? (rest cursos)))
-     (error 'generar-combinaciones
-            "la compatibilidad de varios cursos queda pendiente para la iteración 2")]
-    [else (explorar-cursos cursos '() 0
-                          (lambda ([_grupo : Grupo] [_elegidos : (Listof Grupo)])
-                            #t))]))
+  (explorar-cursos (agrupar-opciones (seleccionar-opciones grupos preferencias))
+                   '() 0 compatible-con-combinacion?))
 
-;; Pruebas de la búsqueda privada mientras llega el módulo de compatibilidad.
+;; Pruebas de la búsqueda privada; las simulaciones de compatibilidad permiten
+;; observar qué ramas se exploran.
 (module+ test
   (require typed/rackunit)
 
@@ -174,4 +169,22 @@
                       (if (equal? grupo b2)
                           (error 'prueba "se exploró una alternativa futura")
                           #t))))
-   (Combinacion (list b1) 3)))
+   (Combinacion (list b1) 3))
+
+  ;; Poda temprana: tras detectar el choque de x1 con y1 no se consulta el
+  ;; curso siguiente con esa pareja ya elegida.
+  (define x1 (Grupo "Computadores" "X" 1 1 3 (list (Horario "LUN" 480 600))))
+  (define y1 (Grupo "Computadores" "Y" 1 1 3 (list (Horario "LUN" 540 660))))
+  (define z1 (Grupo "Computadores" "Z" 1 1 2 (list (Horario "MAR" 480 600))))
+  (check-equal?
+   (stream->list
+    (explorar-cursos (list (list x1) (list y1) (list z1)) '() 0
+                    (lambda ([grupo : Grupo] [elegidos : (Listof Grupo)])
+                      (if (and (member x1 elegidos) (member y1 elegidos))
+                          (error 'prueba "se exploró una rama con choque")
+                          (compatible-con-combinacion? grupo elegidos)))))
+   (list (Combinacion (list z1) 2)
+         (Combinacion (list y1) 3)
+         (Combinacion (list y1 z1) 5)
+         (Combinacion (list x1) 3)
+         (Combinacion (list x1 z1) 5))))
