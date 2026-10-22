@@ -7,7 +7,8 @@
 (require "tipos.rkt")
 
 (provide horarios-chocan?
-         grupos-chocan?)
+         grupos-chocan?
+         compatible-con-combinacion?)
 
 ;; ============================================================
 ;; 1. DETECCION DE CHOQUES ENTRE HORARIOS
@@ -35,3 +36,22 @@
         (horarios-chocan? horario1 horario2))
       (Grupo-horarios grupo2)))
    (Grupo-horarios grupo1)))
+
+;; ============================================================
+;; 3. COMPATIBILIDAD CON GRUPOS SELECCIONADOS
+;; ============================================================
+
+(: compatible-con-combinacion?
+   (-> Grupo (Listof Grupo) Boolean))
+
+(define (compatible-con-combinacion? grupo elegidos)
+  (andmap
+   (lambda ([seleccionado : Grupo])
+     (and
+      (not (grupos-chocan? grupo seleccionado))
+      (not
+       (and (string=? (Grupo-carrera grupo)
+                      (Grupo-carrera seleccionado))
+            (string=? (Grupo-codigo grupo)
+                      (Grupo-codigo seleccionado))))))
+   elegidos))
