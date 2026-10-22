@@ -1,0 +1,136 @@
+#lang typed/racket
+
+(require typed/rackunit
+         "../tipos.rkt"
+         "../lector_catalogo.rkt"
+         "../lector_preferencias.rkt")
+
+(define catalogo
+  (leer-catalogo
+   "../../datos/salida/catalogo_procesado.csv"))
+
+(define preferencias
+  (leer-preferencias
+   "../../datos/entrada/preferencias.csv"))
+
+
+(: mismo-grupo?
+   (-> Grupo IdGrupo Boolean))
+
+(define (mismo-grupo? grupo id)
+
+  (and
+
+   (string=?
+    (Grupo-carrera grupo)
+    (IdGrupo-carrera id))
+
+   (string=?
+    (Grupo-codigo grupo)
+    (IdGrupo-codigo id))
+
+   (=
+    (Grupo-periodo grupo)
+    (IdGrupo-periodo id))
+
+   (=
+    (Grupo-numero grupo)
+    (IdGrupo-grupo id))))
+
+
+(: grupo-existe?
+   (-> IdGrupo (Listof Grupo) Boolean))
+
+(define (grupo-existe? id catalogo)
+
+  (ormap
+
+   (lambda ([grupo : Grupo])
+     (mismo-grupo? grupo id))
+
+   catalogo))
+
+
+(define grupos-interes
+  (Preferencias-grupos-interes preferencias))
+
+
+(define grupos-no-encontrados
+  (filter
+
+   (lambda ([id : IdGrupo])
+     (not
+      (grupo-existe? id catalogo)))
+
+   grupos-interes))
+
+
+(displayln "======================================")
+(displayln "PRUEBA DE INTEGRACION")
+(displayln "======================================")
+
+(displayln "")
+
+(displayln "Cantidad de grupos en el catalogo:")
+(displayln
+ (length catalogo))
+
+(displayln "")
+
+(displayln "Cantidad de grupos de interes:")
+(displayln
+ (length grupos-interes))
+
+(displayln "")
+
+(displayln "Carrera seleccionada:")
+(displayln
+ (Preferencias-carrera preferencias))
+
+(displayln "")
+
+
+(displayln "Grupos solicitados:")
+
+(for-each
+
+ (lambda ([id : IdGrupo])
+
+   (displayln
+    (format "~a P~a-G~a"
+            (IdGrupo-codigo id)
+            (IdGrupo-periodo id)
+            (IdGrupo-grupo id))))
+
+ grupos-interes)
+
+
+(displayln "")
+
+(if (empty? grupos-no-encontrados)
+
+    (displayln
+     "Todos los grupos de preferencias existen en el catalogo.")
+
+    (begin
+
+      (displayln
+       "ERROR: Los siguientes grupos no existen:")
+
+      (for-each
+       displayln
+       grupos-no-encontrados)))
+
+(check-true
+ (> (length catalogo) 0))
+
+(check-true
+ (> (length grupos-interes) 0))
+
+(check-equal?
+ (length grupos-no-encontrados)
+ 0)
+
+
+(displayln "")
+(displayln "Todas las pruebas de integracion pasaron correctamente.")

@@ -1,0 +1,15 @@
+#lang typed/racket
+
+(require "tipos.rkt")
+(require "lector_catalogo.rkt")
+
+(define grupos
+  (leer-catalogo
+   "../datos/salida/catalogo_procesado.csv"))
+
+(displayln "Cantidad de grupos encontrados:")
+(displayln (length grupos))
+
+(displayln "")
+(displayln "Primer grupo:")
+(displayln (first grupos))

@@ -1,0 +1,7 @@
+#lang typed/racket
+
+(require racket/file
+         "tipos.rkt"
+         "utils_csv.rkt")
+
+(provide leer-preferencias)
