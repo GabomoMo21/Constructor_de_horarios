@@ -8,10 +8,6 @@
  (struct-out Combinacion))
 
 
-;; ============================================================
-;; Horario
-;; ============================================================
-
 (struct Horario
   ([dia : String]
    [inicio : Integer]
@@ -19,35 +15,20 @@
   #:transparent)
 
 
-;; ============================================================
-;; IdGrupo
-;; ============================================================
-
 (struct IdGrupo
   ([carrera : String]
    [codigo : String]
-   [periodo : Integer]
    [grupo : Integer])
   #:transparent)
 
 
-;; ============================================================
-;; Grupo
-;; ============================================================
-
 (struct Grupo
   ([carrera : String]
    [codigo : String]
-   [periodo : Integer]
    [numero : Integer]
    [creditos : Integer]
    [horarios : (Listof Horario)])
   #:transparent)
-
-
-;; ============================================================
-;; Preferencias
-;; ============================================================
 
 (struct Preferencias
   ([carrera : String]
@@ -56,10 +37,6 @@
    [creditos-max : Integer])
   #:transparent)
 
-
-;; ============================================================
-;; Combinacion
-;; ============================================================
 
 (struct Combinacion
   ([grupos : (Listof Grupo)]

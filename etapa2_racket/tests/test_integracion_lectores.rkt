@@ -5,6 +5,7 @@
          "../lector_catalogo.rkt"
          "../lector_preferencias.rkt")
 
+
 (define catalogo
   (leer-catalogo
    "../../datos/salida/catalogo_procesado.csv"))
@@ -30,10 +31,6 @@
     (IdGrupo-codigo id))
 
    (=
-    (Grupo-periodo grupo)
-    (IdGrupo-periodo id))
-
-   (=
     (Grupo-numero grupo)
     (IdGrupo-grupo id))))
 
@@ -46,26 +43,36 @@
   (ormap
 
    (lambda ([grupo : Grupo])
-     (mismo-grupo? grupo id))
+     (mismo-grupo?
+      grupo
+      id))
 
    catalogo))
 
 
+
 (define grupos-interes
-  (Preferencias-grupos-interes preferencias))
+  (Preferencias-grupos-interes
+   preferencias))
 
 
 (define grupos-no-encontrados
+
   (filter
 
    (lambda ([id : IdGrupo])
+
      (not
-      (grupo-existe? id catalogo)))
+      (grupo-existe?
+       id
+       catalogo)))
 
    grupos-interes))
 
 
+(displayln "======================================")
 (displayln "PRUEBA DE INTEGRACION")
+(displayln "======================================")
 
 (displayln "")
 
@@ -87,23 +94,26 @@
 
 (displayln "")
 
-
 (displayln "Grupos solicitados:")
+
 
 (for-each
 
  (lambda ([id : IdGrupo])
 
    (displayln
-    (format "~a P~a-G~a"
-            (IdGrupo-codigo id)
-            (IdGrupo-periodo id)
-            (IdGrupo-grupo id))))
+
+    (format
+     "~a G~a"
+     (IdGrupo-codigo id)
+     (IdGrupo-grupo id))))
 
  grupos-interes)
 
 
 (displayln "")
+
+
 
 (if (empty? grupos-no-encontrados)
 
@@ -119,11 +129,14 @@
        displayln
        grupos-no-encontrados)))
 
+
 (check-true
  (> (length catalogo) 0))
 
+
 (check-true
  (> (length grupos-interes) 0))
+
 
 (check-equal?
  (length grupos-no-encontrados)
