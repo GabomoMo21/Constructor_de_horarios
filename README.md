@@ -77,13 +77,13 @@ La separación se hizo por responsabilidad. `main.c` mantiene el orden general d
 Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos
 ```
 
-Los horarios conservan el periodo, el grupo y sus bloques de día y hora. Por ejemplo:
+Los horarios conservan el grupo y sus bloques de día y hora. Por ejemplo:
 
 ```text
-P1-G1=MIE[07:30-09:20];VIE[07:30-09:20]
+G1=MIE[07:30-09:20];VIE[07:30-09:20]
 ```
 
-El lector guarda cada bloque por separado, pero mantiene el periodo y grupo al que pertenece.
+El lector guarda cada bloque por separado, pero mantiene el grupo al que pertenece. Los números de grupo son únicos dentro de cada curso.
 
 ### Historial
 
@@ -116,7 +116,7 @@ Por ejemplo, `FI1101` aparece en las dos carreras y sus condiciones no son igual
 
 En el catálogo existen cursos con muchos grupos y bloques de horario. Por ejemplo, cursos como `MA1102` tienen decenas de bloques disponibles. Por esta razón se reservó espacio para hasta `MAX_HORARIOS` bloques por curso y una línea suficientemente amplia para leer los campos largos del CSV.
 
-El lector no depende de que todos los grupos usen exactamente el mismo separador. Busca las marcas de periodo y grupo, como `P1-G2=`, y después reconoce los bloques con formato `DIA[hora-hora]`.
+El lector no depende de que todos los grupos usen exactamente el mismo separador. Busca las marcas de grupo, como `G2=`, y después reconoce los bloques con formato `DIA[hora-hora]`.
 
 ### Requisitos y correquisitos
 
@@ -157,7 +157,8 @@ Si un requisito no forma parte del catálogo de los primeros semestres cargados,
 Durante la limpieza y adaptación del catálogo se tomaron algunas decisiones a partir de los datos reales:
 
 - Se conserva la carrera porque hay códigos compartidos entre los dos planes de estudio.
-- Se conserva el periodo y grupo de cada bloque para no perder información de matrícula.
+- Se conserva el grupo de cada bloque para no perder información de matrícula.
+- Se eliminó el período (`P1`/`P2`) del catálogo y de las estructuras. Originalmente un grupo se identificaba como `P1-G1`, pero el mismo número de grupo se repetía entre períodos y el período no aportaba información útil para armar combinaciones, solo complicaba la identificación. El equipo renumeró los grupos para que sean únicos dentro de cada curso (`G1`, `G2`…), de modo que un grupo queda identificado por carrera, código y número.
 - Los requisitos o correquisitos vacíos se normalizan internamente como `No hay`.
 - Se aumentaron los límites de lectura porque algunos cursos tienen campos de horario extensos y una gran cantidad de bloques.
 - `Prueba Avanzada Inglés` aparecía sin código en una versión del catálogo y se corrigió a `CI0205` después de verificar el dato.
@@ -177,7 +178,6 @@ Este mismo criterio se utiliza en la validación de correquisitos y en el DFS pa
 Guarda un bloque específico de un grupo:
 
 ```c
-int periodo;
 int grupo;
 char dias[10];
 char horainicio[6];
@@ -239,10 +239,10 @@ Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,TieneChoque,Pue
 
 Se agregó `Carrera` porque es necesaria para distinguir códigos compartidos entre los dos planes.
 
-Los horarios se guardan en un solo campo conservando periodo, grupo, día y hora:
+Los horarios se guardan en un solo campo conservando grupo, día y hora:
 
 ```text
-P1-G1=MIE[07:30-09:20];VIE[07:30-09:20] | P1-G2=LUN[10:00-11:50]
+G1=MIE[07:30-09:20];VIE[07:30-09:20] | G2=LUN[10:00-11:50]
 ```
 
 Los campos de texto se escriben entre comillas para evitar que una coma dentro del texto cambie la cantidad de columnas. `TieneChoque` y `PuedeMatricular` se exportan como `SI` o `NO`.
@@ -295,7 +295,7 @@ Durante la revisión de esta etapa se comprobó que:
 
 - el proyecto compila con `-Wall -Wextra -Wpedantic` sin advertencias;
 - todos los registros del catálogo se cargan y se vuelven a exportar;
-- los bloques de horario se conservan con su periodo y grupo;
+- los bloques de horario se conservan con su grupo;
 - los códigos compartidos entre carreras se mantienen separados;
 - un correquisito ya aprobado se acepta como cumplido;
 - el DFS no reporta ciclos en el catálogo actual;
@@ -305,6 +305,94 @@ Durante la revisión de esta etapa se comprobó que:
 ## Ejecutable
 
 El repositorio ignora archivos compilados para no mezclar binarios con el código fuente durante el desarrollo.
+
+## Etapa 2: generación de combinaciones (`generador.rkt`)
+
+El generador recibe los grupos habilitados que entrega `lector_catalogo.rkt` y las preferencias que entrega `lector_preferencias.rkt`, y produce, como stream, las combinaciones de grupos de interés que no tienen choques. El filtro por créditos y el exportador consumen ese stream después.
+
+```text
+leer-catalogo ─────┐
+leer-preferencias ─┴─→ generar-combinaciones ─→ filtrar-por-creditos ─→ exportar-combinaciones
+                                │
+                                └─ consulta compatible-con-combinacion? (compatibilidad.rkt)
+```
+
+La función pública es:
+
+```racket
+(: generar-combinaciones (-> (Listof Grupo) Preferencias (Sequenceof Combinacion)))
+```
+
+### Funcionamiento
+
+1. `seleccionar-opciones` conserva solo los grupos de la carrera de las preferencias que aparecen en la lista de interés. Si un grupo viene repetido, se toma una sola vez.
+2. `agrupar-opciones` reúne esas opciones por curso, `(carrera, codigo)`, respetando el orden del catálogo. El resultado es una lista de cursos, y cada curso es la lista de sus grupos alternativos.
+3. `explorar-cursos` y `explorar-opciones` recorren el árbol de decisiones de forma recursiva. Para cada curso hay una rama que lo **omite** y una rama por cada **grupo** que se puede elegir. Al llegar al final se emite la combinación solo si se eligió al menos un grupo.
+
+Por ejemplo, con los cursos A (grupos A1 y A2) y B (grupo B1) el orden de salida es: `B1`, `A1`, `A1+B1`, `A2`, `A2+B1`. Si `A1` choca con `B1`, la rama `A1+B1` no se explora.
+
+### Decisiones de diseño
+
+- **Stream construido directamente.** Las combinaciones se producen con `stream-cons` y `empty-stream` durante la recursión, sin crear antes una lista completa. `concatenar` une el stream de una rama con una función (*thunk*) que calcula la rama siguiente, de modo que esa rama solo se explora cuando alguien pide más elementos. Pedir la primera combinación no calcula las demás.
+- **Poda temprana.** Antes de descender por un grupo, se consulta `compatible-con-combinacion?` con los grupos ya elegidos. Si hay choque, la rama se abandona en ese momento y no se construye ninguna combinación que la contenga.
+- **Compatibilidad como parámetro.** La búsqueda recibe la función de compatibilidad como argumento. La interfaz pública usa la función real de `compatibilidad.rkt` y las pruebas internas usan funciones simuladas para observar qué ramas se exploran.
+- **Subconjuntos.** Siguiendo el plan del equipo, un curso de interés puede quedar fuera de una combinación; nunca se elige más de un grupo por curso y nunca se emite la combinación vacía.
+- **Una sola carrera.** Los grupos o intereses de otra carrera se ignoran aunque compartan código y número, para no mezclar planes de estudio.
+- **Inmutabilidad.** El estado de la búsqueda (cursos pendientes, grupos elegidos y créditos acumulados) viaja como argumentos de la recursión; no se usa `set!` ni estructuras mutables.
+- **`Sequenceof`.** Typed Racket no define un tipo `Streamof`; `typed/racket/stream` tipa los streams como `Sequenceof`, y el equipo usa ese tipo en todas las firmas.
+
+### Estructuras de datos
+
+| Estructura | Uso en el generador |
+|---|---|
+| `Grupo` | Opción elegible: carrera, código, número, créditos y bloques `Horario`. |
+| `IdGrupo` | Identifica un grupo de interés como `(carrera, codigo, grupo)` y sirve para eliminar repetidos. |
+| `Preferencias` | Carrera y lista de `IdGrupo` de interés; el rango de créditos lo usa el filtro. |
+| `(Listof (Listof Grupo))` | Cursos agrupados: cada sublista son las alternativas de un curso. |
+| `Combinacion` | Grupos elegidos y sus créditos totales, acumulados durante la recursión. |
+
+### Caso límite real
+
+Al principio un grupo se identificaba por `(carrera, codigo, periodo, numero)`, porque el catálogo usaba marcas como `P1-G1` y `P2-G1`, que comparten número. Durante la integración el equipo eliminó el período y renumeró los grupos para que sean únicos por curso. Las pruebas del generador mostraron el efecto: dos grupos que antes se distinguían solo por el período pasaban a tener el mismo `IdGrupo` y se habrían tomado como repetidos. Se adaptó `id-de-grupo` y los datos de prueba se reescribieron con números distintos por curso.
+
+### Pruebas
+
+`tests/test_generador.rkt` y el submódulo `test` de `generador.rkt` comprueban:
+
+- una combinación por alternativa, combinaciones individuales y conjuntas, y que nunca aparece la vacía;
+- que un choque elimina solo la pareja afectada, que los bloques contiguos son compatibles y que basta un bloque traslapado de un grupo con varios bloques;
+- créditos cero, intereses repetidos, inexistentes o de otra carrera, y códigos iguales en carreras distintas;
+- propiedades sobre todas las combinaciones: sin repetidas, un grupo por curso y créditos correctos;
+- consumo parcial del stream y poda temprana (una compatibilidad simulada falla si se consulta una rama que ya contiene un choque).
+
+Con el catálogo real y 4 cursos de Ingeniería en Computadores (59 grupos de interés), el generador produjo 9578 combinaciones, todas sin choques y con los créditos correctos.
+
+## Dependencias adicionales de la etapa 2
+
+La etapa 1 solo requiere un compilador C11. Para trabajar con la etapa 2 se necesita Racket con Typed Racket y `raco`. En Windows, si Racket está instalado pero `raco` no se reconoce en PowerShell, agrega su carpeta (por ejemplo, `C:\Program Files\Racket`) a `Path` y abre otra terminal.
+
+### `typed-racket-stream` — generador de combinaciones
+
+`etapa2_racket/generador.rkt` construye combinaciones perezosamente con `stream-cons` y `empty-stream`; `etapa2_racket/tests/test_generador.rkt` consume esos streams para comprobar los resultados. Ambos usan `typed/racket/stream`, que proporciona estas operaciones con tipos para `#lang typed/racket`. Instala el paquete una vez por instalación de Racket:
+
+```powershell
+raco pkg install --auto typed-racket-stream
+```
+
+Las pruebas importan además `typed/rackunit` (paquete `rackunit-typed`), incluido en la instalación de Racket 9.3 comprobada. Si tu instalación no lo incluye, consulta antes de agregarlo como nuevo requisito y documéntalo aquí.
+
+Desde la raíz de este repositorio, compila el generador y el archivo de pruebas, y luego ejecuta las pruebas con:
+
+```powershell
+raco make etapa2_racket/compatibilidad.rkt etapa2_racket/generador.rkt etapa2_racket/tests/test_compatibilidad.rkt etapa2_racket/tests/test_generador.rkt
+raco test etapa2_racket/compatibilidad.rkt etapa2_racket/generador.rkt etapa2_racket/tests/test_compatibilidad.rkt etapa2_racket/tests/test_generador.rkt
+```
+
+`raco make` normalmente no imprime nada cuando compila sin errores; **no ejecuta las pruebas**. `raco test` sí las ejecuta y debe mostrar `31 tests passed`. Las pruebas internas de `generador.rkt` usan funciones de compatibilidad simuladas para observar qué ramas se exploran (incluida la poda temprana); las pruebas de `tests/test_generador.rkt` comprueban la interfaz pública con la compatibilidad real. Si `raco` no está en PATH, sustituye `raco` en cada comando por `& 'C:\Program Files\Racket\raco.exe'` (ajustando la ruta a tu instalación).
+
+La firma tipada actual del generador devuelve `(Sequenceof Combinacion)`, que es la representación que emplea esta biblioteca para los streams. El módulo genera streams, no listas completas; `Sequenceof` por sí solo admite otras secuencias, por lo que los filtros y el exportador deben mantener el consumo perezoso. Typed Racket no define un tipo `Streamof`, por lo que el equipo acordó usar `Sequenceof` en todas las firmas. `generar-combinaciones` acepta varios cursos y consulta `compatible-con-combinacion?` (de `compatibilidad.rkt`) antes de agregar cada grupo, descartando la rama en cuanto detecta un choque.
+
+Antes de agregar cualquier otra dependencia o requisito de instalación, consúltalo con el equipo. Si se aprueba, documenta en este apartado qué parte del código lo necesita, qué hay que instalar y cómo comprobarlo.
 
 ### Nota para Windows
 
