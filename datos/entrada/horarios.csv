@@ -65,9 +65,32 @@ Ingeniería Ambiental,SE1102,Acción social,0,G1=LUN[18:00-19:50] MIE[13:00-14:5
 Ingeniería Ambiental,SE1103,Danza,0,G1=JUE[09:30-11:20] | G2=MIE[15:00-16:50] | G3=MAR[17:30-19:10],,
 Ingeniería Ambiental,QU2605,laboratorio de química ambiental y analítica,3,G1=MIE[13:00-16:50],AI2101;QU1104,QU2604
 Ingeniería Ambiental,AI2401,análisis topográfico en ingeniería ambiental,3,G1=JUE[13:00-16:50] | G2=JUE[13:00-16:50],MA1102,No hay
-Ingeniería Ambiental,AI3208,hidráulica para ingeniería ambiental,3,,FI2103,No hay
-Ingeniería Ambiental,AI3212,termodinámica y cinética ambiental,4,,FI2103;QU1107,No hay
+Ingeniería Ambiental,AI3208,hidráulica para ingeniería ambiental,3,G1=LUN[13:00-16:50];MAR[13:00-16:50];MIE[13:00-15:50],FI2103,No hay
+Ingeniería Ambiental,AI3212,termodinámica y cinética ambiental,4,G1=MAR[13:00-14:50];JUE[13:00-14:50] | G2=SAB[13:00-16:50],FI2103;QU1107,No hay
 Ingeniería Ambiental,CS2101,ambiente humano,2,G1=MIE[09:30-12:20] | G2=MIE[13:00-15:50] | G3=LUN[09:00-11:50] | G4=MIE[15:00-17:50] | G5=VIE[15:00-17:30] | G6=LUN[07:30-10:20] | G7=VIE[13:00-15:50] | G8=MAR[18:00-20:50] | G9=LUN[18:00-20:50],CS1502,No hay
-Ingeniería Ambiental,CS4108,derecho ambiental,1,,AI3104,No hay
-Ingeniería Ambiental,QU2409,química orgánica y bioquímica,3,,QU1107,QU2410
-Ingeniería Ambiental,QU2410,laboratorio de química orgánica y bioquímica,2,,QU1104,QU2409
+Ingeniería Ambiental,CS4108,derecho ambiental,1,G1=LUN[18:00-19:50],AI3104,No hay
+Ingeniería Ambiental,QU2409,química orgánica y bioquímica,3,G1=MAR[09:30-11:20];JUE[09:30-11:20],QU1107,QU2410
+Ingeniería Ambiental,QU2410,laboratorio de química orgánica y bioquímica,2,G1=MIE[07:30-11:20] | G2=MIE[13:00-16:50],QU1104,QU2409
+Ingeniería Ambiental,AI3105,laboratorio de microbiología ambiental,2,G1=LUN[10:30-18:50] | G2=LUN[11:30-12:20];MAR[09:30-11:20],QU2410,AI3106
+Ingeniería Ambiental,AI3106,microbiología ambiental,3,G1=MAR[13:00-14:50];JUE[13:00-14:50],QU2409,AI3105
+Ingeniería Ambiental,AI3107,operaciones unitarias,3,G1=MAR[15:00-16:50];JUE[15:00-16:50],AI3208;QU2604,No hay
+Ingeniería Ambiental,AI3108,dibujo e interpretación de planos,3,G1=LUN[07:30-10:20],AI2401,No hay
+Ingeniería Ambiental,FO3401,sistemas de información geográfica,3,G1=MIE[07:30-11:20] | G2=JUE[07:30-11:20] | G3=MIE[07:30-11:20],AI2401,No hay
+Ingeniería Ambiental,MA2104,cálculo superior,4,G1=MAR[18:00-19:50] | G2=MAR[09:30-11:20];JUE[09:30-11:20] | G3=MIE[07:30-09:20];VIE[07:30-09:20] | G4=MIE[13:00-14:50];VIE[13:00-14:50] | G5=MIE[13:00-14:50];VIE[13:00-14:50] | G6=MIE[15:00-16:50] | G7=SAB[07:30-11:20],MA1103,No hay
+Ingeniería Ambiental,AI3109,laboratorio de tratamiento de agua potable y residual,2,G1=JUE[13:00-15:50] | G2=JUE[13:00-15:50],AI3105,AI3110;AI3112
+Ingeniería Ambiental,AI3110,diseño de sistemas de potabilización de agua,3,G1=MAR[13:00-16:50],AI3107;AI3108,AI3109
+Ingeniería Ambiental,AI3111,administración de proyectos de infraestructura ambiental,3,G1=MIE[13:00-15:50] | G2=MIE[13:00-15:50],AI3108;CS2101,No hay
+Ingeniería Ambiental,AI3112,diseño y tratamiento de aguas residuales,3,G1=MAR[09:30-11:20];JUE[09:30-11:20],AI3106;QU2604,AI3109
+Ingeniería Ambiental,AI3209,hidrología,3,G1=MIE[17:00-20:50],FO3401,No hay
+Ingeniería Ambiental,MA2105,ecuaciones diferenciales,4,G1=SAB[07:30-11:20] | G2=MAR[17:00-18:50];JUE[17:00-18:50] | G3=MAR[17:00-20:50];MIE[17:00-20:50];JUE[17:00-19:50] | G4=MIE[07:30-09:20];VIE[07:30-09:20] | G5=MAR[07:30-11:20];MIE[07:30-11:20];JUE[07:30-10:20] | G6=MAR[13:00-14:50] | G7=MAR[13:00-16:50];MIE[13:00-16:50] | G8=JUE[13:00-14:50] | G9=JUE[13:00-15:50] | G10=MAR[13:00-16:50];MIE[13:00-16:50];JUE[13:00-15:50] | G11=MIE[07:30-09:20];VIE[07:30-09:20] | G12=MIE[15:00-16:50];VIE[15:00-16:50] | G13=MAR[07:30-09:20];JUE[07:30-09:20] | G14=MAR[09:30-11:20];JUE[09:30-11:20] | G15=MAR[13:00-16:50];MIE[13:00-16:50];JUE[13:00-15:50] | G16=MIE[13:00-14:50];VIE[13:00-14:50] | G17=MAR[16:00-17:50];JUE[16:00-17:50],MA1103,No hay
+Ingeniería Ambiental,SE1200,actividad deportiva I,0,,No hay,No hay
+Ingeniería en Computadores,CE1107,fundamentos de arquitectura de computadores,4,G1=MAR[13:00-14:50];JUE[13:00-14:50],EL2207,No hay
+Ingeniería en Computadores,CE3101,bases de datos,4,G1=MAR[19:00-20:50];MIE[17:00-20:50];JUE[19:00-20:50],CE1106,No hay
+Ingeniería en Computadores,CE3201,taller de diseño digital,2,G1=MIE[09:30-11:20];VIE[09:30-11:20] | G2=MAR[09:30-11:20];JUE[09:30-11:20],CE2201,CE1107
+Ingeniería en Computadores,MA2105,ecuaciones diferenciales,4,G1=SAB[07:30-11:20] | G2=MAR[17:00-18:50];JUE[17:00-18:50] | G3=MAR[17:00-20:50];MIE[17:00-20:50];JUE[17:00-19:50] | G4=MIE[07:30-09:20];VIE[07:30-09:20] | G5=MAR[07:30-11:20];MIE[07:30-11:20];JUE[07:30-10:20] | G6=MAR[13:00-14:50] | G7=MAR[13:00-16:50];MIE[13:00-16:50] | G8=JUE[13:00-14:50] | G9=JUE[13:00-15:50] | G10=MAR[13:00-16:50];MIE[13:00-16:50];JUE[13:00-15:50] | G11=MIE[07:30-09:20];VIE[07:30-09:20] | G12=MIE[15:00-16:50];VIE[15:00-16:50] | G13=MAR[07:30-09:20];JUE[07:30-09:20] | G14=MAR[09:30-11:20];JUE[09:30-11:20] | G15=MAR[13:00-16:50];MIE[13:00-16:50];JUE[13:00-15:50] | G16=MIE[13:00-14:50];VIE[13:00-14:50] | G17=MAR[16:00-17:50];JUE[16:00-17:50],MA1103,No hay
+Ingeniería en Computadores,PI5516,ingeniería económica,3,G1=MAR[17:00-20:50] | G2=MAR[17:00-20:50] | G3=VIE[17:00-20:50] | G4=VIE[17:00-20:50] | G5=MIE[07:00-10:50] | G6=MIE[07:00-10:50] | G7=LUN[16:10-19:45],PI2609,No hay
+Ingeniería en Computadores,CE1108,compiladores e intérpretes,4,G1=MAR[09:30-11:20];JUE[09:30-11:20],CE1107,CE4301
+Ingeniería en Computadores,CE1109,circuitos analógicos,4,G1=MAR[17:00-18:50];JUE[17:00-18:50],EL2207;SO4604,No hay
+Ingeniería en Computadores,CE1110,análisis de señales mixtas,4,G1=MIE[09:30-11:20];VIE[09:30-11:20],EL2114;MA2105,No hay
+Ingeniería en Computadores,CE4301,arquitectura de computadores I,4,G1=MIE[15:00-16:50];VIE[15:00-16:50],CE1107;CE3201,No hay
+Ingeniería en Computadores,CI3203,inglés especializado para ingenierías en computadores,2,,CI0205,No hay
