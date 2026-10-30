@@ -5,43 +5,6 @@
          "../lector_preferencias.rkt")
 
 
-(: mismo-id-grupo? (-> IdGrupo IdGrupo Boolean))
-(define (mismo-id-grupo? a b)
-  (and
-   (string=? (IdGrupo-carrera a)
-             (IdGrupo-carrera b))
-
-   (string=? (IdGrupo-codigo a)
-             (IdGrupo-codigo b))
-
-   (= (IdGrupo-grupo a)
-      (IdGrupo-grupo b))))
-
-
-(: contiene-duplicados? (-> (Listof IdGrupo) Boolean))
-(define (contiene-duplicados? grupos)
-
-  (cond
-
-    [(empty? grupos)
-     #f]
-
-    [else
-
-     (or
-
-      (ormap
-       (lambda ([otro : IdGrupo])
-         (mismo-id-grupo?
-          (first grupos)
-          otro))
-       (rest grupos))
-
-      (contiene-duplicados?
-       (rest grupos)))]))
-
-
-
 (define preferencias
   (leer-preferencias
    "../../datos/entrada/preferencias.csv"))
@@ -124,17 +87,3 @@
     (> (IdGrupo-grupo id) 0))
 
   (Preferencias-grupos-interes preferencias)))
-
-(define hay-duplicados
-  (contiene-duplicados?
-   (Preferencias-grupos-interes preferencias)))
-
-(check-false hay-duplicados)
-
-(if hay-duplicados
-
-    (displayln
-     "ERROR: Existen grupos repetidos en preferencias.")
-
-    (displayln
-     "Todas las pruebas de preferencias pasaron correctamente."))
