@@ -543,7 +543,6 @@ raco test test_lector.rkt test_preferencias.rkt test_integracion_lectores.rkt
 cd ../..
 ```
 
-La prueba de Persona 4 emplea datos creados manualmente y un archivo JSON temporal, por lo que no necesita modificar los CSV compartidos. Estos archivos sirven para comprobar los módulos y los casos límite, pero no sustituyen una ejecución completa sobre los datos finales.
 
 ### Alcance de esta entrega
 
