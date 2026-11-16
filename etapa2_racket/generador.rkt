@@ -15,12 +15,15 @@
            (Grupo-codigo grupo)
            (Grupo-numero grupo)))
 
+
 (: grupo-de-interes? (-> Grupo Preferencias Boolean))
+
 (define (grupo-de-interes? grupo preferencias)
-  (and (string=? (Grupo-carrera grupo) (Preferencias-carrera preferencias))
-       (ormap (lambda ([id : IdGrupo])
-                (equal? id (id-de-grupo grupo)))
-              (Preferencias-grupos-interes preferencias))))
+  (ormap
+   (lambda ([id : IdGrupo])
+     (equal? id (id-de-grupo grupo)))
+   (Preferencias-grupos-interes preferencias)))
+
 
 (: seleccionar-opciones (-> (Listof Grupo) Preferencias (Listof Grupo)))
 (define (seleccionar-opciones grupos preferencias)
@@ -113,16 +116,20 @@
 (module+ test
   (require typed/rackunit)
 
-  (define a1 (Grupo "Computadores" "A" 1 4 '()))
-  (define a2 (Grupo "Computadores" "A" 2 0 '()))
-  (define b1 (Grupo "Computadores" "B" 1 3 '()))
-  (define b2 (Grupo "Computadores" "B" 2 3 '()))
+  (define a1 (Grupo "Computadores" "A" 1 4 '() "computacion"))
+  (define a2 (Grupo "Computadores" "A" 2 0 '() "computacion"))
+  (define b1 (Grupo "Computadores" "B" 1 3 '() "computacion"))
+  (define b2 (Grupo "Computadores" "B" 2 3 '() "computacion"))
   (define cursos (agrupar-opciones (list a1 b1 a2 b2)))
 
   (check-equal? cursos (list (list a1 a2) (list b1 b2)))
   (check-equal?
-   (agrupar-opciones (list a1 (Grupo "Ambiental" "A" 1 4 '())))
-   (list (list a1) (list (Grupo "Ambiental" "A" 1 4 '()))))
+   (agrupar-opciones
+    (list a1
+          (Grupo "Ambiental" "A" 1 4 '() "ingenieria")))
+   (list
+    (list a1)
+    (list (Grupo "Ambiental" "A" 1 4 '() "ingenieria"))))
   ;; Omitir cada curso y elegir una alternativa, sin repetir curso ni vacío.
   (check-equal?
    (stream->list (explorar-cursos cursos '() 0
@@ -172,9 +179,20 @@
 
   ;; Poda temprana: tras detectar el choque de x1 con y1 no se consulta el
   ;; curso siguiente con esa pareja ya elegida.
-  (define x1 (Grupo "Computadores" "X" 1 3 (list (Horario "LUN" 480 600))))
-  (define y1 (Grupo "Computadores" "Y" 1 3 (list (Horario "LUN" 540 660))))
-  (define z1 (Grupo "Computadores" "Z" 1 2 (list (Horario "MAR" 480 600))))
+  (define x1
+  (Grupo "Computadores" "X" 1 3
+         (list (Horario "LUN" 480 600))
+         "computacion"))
+
+(define y1
+  (Grupo "Computadores" "Y" 1 3
+         (list (Horario "LUN" 540 660))
+         "computacion"))
+
+(define z1
+  (Grupo "Computadores" "Z" 1 2
+         (list (Horario "MAR" 480 600))
+         "computacion"))
   (check-equal?
    (stream->list
     (explorar-cursos (list (list x1) (list y1) (list z1)) '() 0

@@ -73,108 +73,57 @@
        minimo
        maximo)))
 
+
 (: procesar-filas-preferencias
-   (-> (Listof String)
-       Preferencias))
+   (-> (Listof String) Preferencias))
 
 (define (procesar-filas-preferencias filas)
-
   (if (empty? filas)
+      (error 'procesar-filas-preferencias
+             "No hay preferencias en el archivo")
 
-      (error
-       'procesar-filas-preferencias
-       "No hay preferencias en el archivo")
+      (let ([primera (separar-csv (first filas))])
+        (if (not (= (length primera) 5))
+            (error 'procesar-filas-preferencias
+                   "Primera fila invalida")
 
-      (let ([primera
-             (separar-csv
-              (first filas))])
+            (let* ([minimo
+                    (texto-a-entero (list-ref primera 3))]
+                   [maximo
+                    (texto-a-entero (list-ref primera 4))]
+                   [rango-valido
+                    (validar-rango-creditos minimo maximo)]
+                   [grupos
+                    (map
+                     (lambda ([linea : String])
+                       (define campos (separar-csv linea))
 
-        (if (< (length primera) 5)
+                       (if (not (= (length campos) 5))
+                           (error 'procesar-filas-preferencias
+                                  "Fila invalida: ~a"
+                                  linea)
 
-            (error
-             'procesar-filas-preferencias
-             "Primera fila incompleta")
+                           (let* ([min-actual
+                                   (texto-a-entero
+                                    (list-ref campos 3))]
+                                  [max-actual
+                                   (texto-a-entero
+                                    (list-ref campos 4))])
 
-            (let*
-                ([carrera
-                  (string-trim
-                   (list-ref primera 0))]
+                             (if (and
+                                  (validar-rango-creditos
+                                   min-actual max-actual)
+                                  (= minimo min-actual)
+                                  (= maximo max-actual))
 
-                 [minimo
-                  (texto-a-entero
-                   (list-ref primera 3))]
+                                 (fila-a-id-grupo campos)
 
-                 [maximo
-                  (texto-a-entero
-                   (list-ref primera 4))]
+                                 (error 'procesar-filas-preferencias
+                                        "Rango inconsistente")))))
+                     filas)])
 
-                 [rango-valido
-                  (validar-rango-creditos
-                   minimo
-                   maximo)]
+              (Preferencias grupos minimo maximo))))))
 
-                 [grupos
-
-                  (map
-
-                   (lambda ([linea : String])
-
-                     (define campos
-                       (separar-csv linea))
-
-                     (if (< (length campos) 5)
-
-                         (error
-                          'procesar-filas-preferencias
-                          "Fila incompleta: ~a"
-                          linea)
-
-                         (let*
-                             ([carrera-actual
-                               (string-trim
-                                (list-ref campos 0))]
-
-                              [min-actual
-                               (texto-a-entero
-                                (list-ref campos 3))]
-
-                              [max-actual
-                               (texto-a-entero
-                                (list-ref campos 4))]
-
-                              [rango-actual
-                               (validar-rango-creditos
-                                min-actual
-                                max-actual)])
-
-                           (if
-                            (and
-                             (string=?
-                              carrera
-                              carrera-actual)
-
-                             (=
-                              minimo
-                              min-actual)
-
-                             (=
-                              maximo
-                              max-actual))
-
-                            (fila-a-id-grupo
-                             campos)
-
-                            (error
-                             'procesar-filas-preferencias
-                             "Carrera o rango inconsistente")))))
-
-                   filas)])
-
-              (Preferencias
-               carrera
-               grupos
-               minimo
-               maximo))))))
 
 
 (: leer-preferencias

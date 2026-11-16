@@ -1,3 +1,4 @@
+
 #lang typed/racket
 
 (provide
@@ -7,13 +8,11 @@
  (struct-out Preferencias)
  (struct-out Combinacion))
 
-
 (struct Horario
   ([dia : String]
    [inicio : Integer]
    [fin : Integer])
   #:transparent)
-
 
 (struct IdGrupo
   ([carrera : String]
@@ -21,22 +20,20 @@
    [grupo : Integer])
   #:transparent)
 
-
 (struct Grupo
   ([carrera : String]
    [codigo : String]
    [numero : Integer]
    [creditos : Integer]
-   [horarios : (Listof Horario)])
+   [horarios : (Listof Horario)]
+   [area : String])
   #:transparent)
 
 (struct Preferencias
-  ([carrera : String]
-   [grupos-interes : (Listof IdGrupo)]
+  ([grupos-interes : (Listof IdGrupo)]
    [creditos-min : Integer]
    [creditos-max : Integer])
   #:transparent)
-
 
 (struct Combinacion
   ([grupos : (Listof Grupo)]

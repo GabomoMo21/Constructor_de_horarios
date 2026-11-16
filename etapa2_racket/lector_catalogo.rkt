@@ -96,128 +96,85 @@
        "Grupo invalido: ~a"
        texto)))
 
+
 (: texto-a-grupo
-   (-> String String Integer String Grupo))
+   (-> String String Integer String String Grupo))
 
-(define (texto-a-grupo
-         carrera
-         codigo
-         creditos
-         texto)
-
-  (define partes
-    (string-split texto "="))
+(define (texto-a-grupo carrera codigo creditos area texto)
+  (define partes (string-split texto "="))
 
   (if (= (length partes) 2)
+      (let* ([texto-grupo (string-trim (first partes))]
+             [texto-horarios (string-trim (second partes))]
+             [grupo (texto-a-numero-grupo texto-grupo)]
+             [lista-horarios
+              (map texto-a-horario
+                   (string-split texto-horarios ";"))])
 
-      (let*
-          ([texto-grupo
-            (string-trim
-             (first partes))]
+        (Grupo carrera
+               codigo
+               grupo
+               creditos
+               lista-horarios
+               area))
 
-           [texto-horarios
-            (string-trim
-             (second partes))]
+      (error 'texto-a-grupo
+             "Formato de grupo invalido: ~a"
+             texto)))
 
-           [grupo
-            (texto-a-numero-grupo
-             texto-grupo)]
 
-           [lista-horarios
-            (map
-             texto-a-horario
-             (string-split
-              texto-horarios
-              ";"))])
-
-        (Grupo
-         carrera
-         codigo
-         grupo
-         creditos
-         lista-horarios))
-
-      (error
-       'texto-a-grupo
-       "Formato de grupo invalido: ~a"
-       texto)))
 
 (: parsear-grupos
-   (-> String String String Integer (Listof Grupo)))
+   (-> String String String Integer String (Listof Grupo)))
 
-(define (parsear-grupos
-         texto
-         carrera
-         codigo
-         creditos)
+(define (parsear-grupos texto carrera codigo creditos area)
+  (define texto-limpio (string-trim texto))
 
-  (define texto-limpio
-    (string-trim texto))
-
-  (if (or
-       (string=? texto-limpio "")
-       (string-ci=? texto-limpio "No hay"))
+  (if (or (string=? texto-limpio "")
+          (string-ci=? texto-limpio "No hay"))
 
       '()
 
       (map
-
        (lambda ([grupo-texto : String])
-
          (texto-a-grupo
           carrera
           codigo
           creditos
+          area
           (string-trim grupo-texto)))
 
-       (string-split
-        texto-limpio
-        "|"))))
+       (string-split texto-limpio "|"))))
 
-(: procesar-fila
-   (-> String (Listof Grupo)))
+
+
+(: procesar-fila (-> String (Listof Grupo)))
 
 (define (procesar-fila linea)
+  (define datos (separar-csv linea))
 
-  (define datos
-    (separar-csv linea))
+  (if (= (length datos) 10)
+      (let* ([carrera (list-ref datos 0)]
+             [codigo (list-ref datos 1)]
+             [creditos (texto-a-entero (list-ref datos 3))]
+             [horarios (list-ref datos 4)]
+             [puede-matricular
+              (string-upcase (list-ref datos 8))]
+             [area (list-ref datos 9)])
 
-  (if (= (length datos) 9)
-
-      (let*
-          ([carrera
-            (list-ref datos 0)]
-
-           [codigo
-            (list-ref datos 1)]
-
-           [creditos
-            (texto-a-entero
-             (list-ref datos 3))]
-
-           [horarios
-            (list-ref datos 4)]
-
-           [puede-matricular
-            (string-upcase
-             (list-ref datos 8))])
-
-        (if (string=?
-             puede-matricular
-             "SI")
-
+        (if (string=? puede-matricular "SI")
             (parsear-grupos
              horarios
              carrera
              codigo
-             creditos)
-
+             creditos
+             area)
             '()))
 
-      (error
-       'procesar-fila
-       "Fila del catalogo invalida: ~a"
-       linea)))
+      (error 'procesar-fila
+             "Fila del catalogo invalida: ~a"
+             linea)))
+
 
 (: procesar-filas
    (-> (Listof String)
