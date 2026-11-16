@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "exportador.h"
 
-// Escribe un texto entre comillas para mantener valido el CSV
+
 static void escribir_campo_csv(FILE *archivo, const char *texto) {
     fputc('"', archivo);
 
@@ -67,7 +67,6 @@ static void escribir_horarios(FILE *archivo,
 }
 
 
-// Exporta una fila por curso con los datos procesados
 int exportar_catalogo(const char *nombre_archivo,
                       Curso catalogo[],
                       int total_cursos) {
@@ -86,7 +85,7 @@ int exportar_catalogo(const char *nombre_archivo,
 
     fprintf(
         archivo,
-        "Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,TieneChoque,PuedeMatricular\n"
+        "Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,TieneChoque,PuedeMatricular,Area\n"
     );
 
     for (int i = 0;
@@ -132,13 +131,19 @@ int exportar_catalogo(const char *nombre_archivo,
 
         fprintf(
             archivo,
-            ",%s,%s\n",
+            ",%s,%s,",
             catalogo[i].tiene_choque
                 ? "SI"
                 : "NO",
             catalogo[i].puede_matricular
                 ? "SI"
                 : "NO");
+
+        escribir_campo_csv(
+            archivo,
+            catalogo[i].area);
+
+        fputc('\n', archivo);
     }
 
     fclose(archivo);

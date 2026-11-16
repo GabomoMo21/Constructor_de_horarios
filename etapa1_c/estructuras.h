@@ -1,3 +1,4 @@
+
 #ifndef ESTRUCTURAS_H
 #define ESTRUCTURAS_H
 
@@ -15,6 +16,7 @@ typedef struct {
     char codigo[MAX_CODIGO];
     char nombre[MAX_STR];
     int creditos;
+    char area[MAX_STR];
     char requisitos[MAX_STR];
     char correquisitos[MAX_STR];
     Horario horarios[MAX_HORARIOS];

@@ -177,10 +177,13 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
             continue;
         }
 
+        
         const char *carrera = campos[0];
         const char *codigo = campos[1];
         const char *nombre = campos[2];
         const char *texto_horarios = campos[4];
+        const char *area = campos[7];
+
 
         int pos =
             buscar_curso(catalogo,
@@ -216,6 +219,12 @@ int cargar_catalogo(const char *nombre_archivo, Curso catalogo[]) {
 
             catalogo[pos].creditos =
                 atoi(campos[3]);
+
+            
+            guardar_texto(
+                catalogo[pos].area,
+                sizeof(catalogo[pos].area),
+                area);
 
             guardar_requisito(
                 catalogo[pos].requisitos,

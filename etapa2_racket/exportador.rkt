@@ -6,16 +6,28 @@
 
 (provide exportar-combinaciones)
 
+
 (: escribir-grupo (-> Grupo Void))
+
 (define (escribir-grupo grupo)
   (display "{\"carrera\":")
   (write-json (Grupo-carrera grupo))
+
   (display ",\"codigo\":")
   (write-json (Grupo-codigo grupo))
+
   (display ",\"grupo\":")
   (write-json (Grupo-numero grupo))
+
+  (display ",\"creditos\":")
+  (write-json (Grupo-creditos grupo))
+
+  (display ",\"area\":")
+  (write-json (Grupo-area grupo))
+
   (display "}")
   (void))
+
 
 (: escribir-grupos (-> (Listof Grupo) Boolean Void))
 (define (escribir-grupos grupos primero?)
