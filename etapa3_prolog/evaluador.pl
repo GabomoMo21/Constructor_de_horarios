@@ -16,6 +16,11 @@
     cumple_todas/1
 ]).
 
+
+% ============================================
+% 1. DETECCION DE LA PRIMERA REGLA INCUMPLIDA
+% ============================================
+
 primera_violacion(Cursos, Razon) :-
     violacion_incompatibilidad(Cursos, Razon),
     !.
@@ -28,6 +33,11 @@ primera_violacion(Cursos, Razon) :-
     violacion_balance(Cursos, Razon),
     !.
 
+
+% ============================================
+% 2. EVALUACION DE COMBINACIONES
+% ============================================
+
 evaluar_combinacion(Cursos, true, ninguna, ninguna) :-
     cumple_todas(Cursos),
     !.
@@ -35,6 +45,10 @@ evaluar_combinacion(Cursos, true, ninguna, ninguna) :-
 evaluar_combinacion(Cursos, false, Razon, CursoAQuitar) :-
     primera_violacion(Cursos, Razon),
     buscar_curso_a_quitar(Cursos, CursoAQuitar).
+
+% ============================================
+% 3. BUSQUEDA DE UN CURSO PARA ELIMINAR
+% ============================================
 
 buscar_curso_a_quitar(Cursos, CursoAQuitar) :-
     select(CursoAQuitar, Cursos, Restantes),

@@ -92,6 +92,43 @@ test(combinacion_rechazada_con_reparacion) :-
         cumple_todas(Restantes)
     )).
 
+test(lista_vacia) :-
+    evaluar_combinacion([], true, ninguna, ninguna).
+
+test(cero_creditos) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PRUEBA06', 1, 0, computacion),
+        curso('Ingeniería Ambiental', 'PRUEBA07', 1, 0, ciencias)
+    ],
+    evaluar_combinacion(Cursos, true, ninguna, ninguna).
+
+test(limite_area_exacto) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PRUEBA08', 1, 3, computacion),
+        curso('Ingeniería en Computadores', 'PRUEBA09', 1, 3, computacion),
+        curso('Ingeniería Ambiental', 'PRUEBA10', 1, 4, ciencias)
+    ],
+    evaluar_combinacion(Cursos, true, ninguna, ninguna).
+
+test(balance_exacto) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PRUEBA11', 1, 7, computacion),
+        curso('Ingeniería Ambiental', 'PRUEBA12', 1, 3, ciencias)
+    ],
+    evaluar_combinacion(Cursos, true, ninguna, ninguna).
+
+test(balance_superado_sin_reparacion) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PRUEBA13', 1, 8, computacion),
+        curso('Ingeniería Ambiental', 'PRUEBA14', 1, 2, ciencias)
+    ],
+    evaluar_combinacion(
+        Cursos,
+        false,
+        balance('Ingeniería en Computadores', 70),
+        ninguna
+    ).
+
 :- end_tests(evaluar_combinacion).
 
 :- begin_tests(buscar_curso_a_quitar, [
@@ -123,5 +160,20 @@ test(reparacion_imposible) :-
 
 test(lista_vacia) :-
     buscar_curso_a_quitar([], ninguna).
+
+test(busqueda_descarta_primera_baja) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PI5516', 1, 3, gestion),
+        curso('Ingeniería Ambiental', 'AE5121', 1, 3, gestion),
+        curso('Ingeniería en Computadores', 'CE1101', 1, 3, computacion),
+        curso('Ingeniería Ambiental', 'AI1100', 1, 3, ingenieria)
+    ],
+    buscar_curso_a_quitar(Cursos, CursoAQuitar),
+    assertion(CursoAQuitar ==
+        curso('Ingeniería Ambiental', 'AE5121', 1, 3, gestion)),
+    once((
+        select(CursoAQuitar, Cursos, Restantes),
+        cumple_todas(Restantes)
+    )).
 
 :- end_tests(buscar_curso_a_quitar).
