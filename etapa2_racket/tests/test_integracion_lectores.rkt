@@ -88,12 +88,6 @@
 
 (displayln "")
 
-(displayln "Carrera seleccionada:")
-(displayln
- (Preferencias-carrera preferencias))
-
-(displayln "")
-
 (displayln "Grupos solicitados:")
 
 
@@ -104,7 +98,8 @@
    (displayln
 
     (format
-     "~a G~a"
+     "~a ~a G~a"
+     (IdGrupo-carrera id)
      (IdGrupo-codigo id)
      (IdGrupo-grupo id))))
 

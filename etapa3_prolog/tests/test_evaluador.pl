@@ -56,6 +56,11 @@ test(combinacion_aceptada) :-
     ],
     evaluar_combinacion(Cursos, true, ninguna, ninguna).
 
+test(combinacion_con_un_curso) :-
+    Curso = curso('Ingeniería en Computadores', 'CE1101', 1, 3, computacion),
+    evaluar_combinacion([Curso], false,
+        balance('Ingeniería en Computadores', 70), Curso).
+
 test(combinacion_rechazada_sin_reparacion) :-
     Cursos = [
         curso('Ingeniería en Computadores', 'PI5516', 1, 4, gestion),

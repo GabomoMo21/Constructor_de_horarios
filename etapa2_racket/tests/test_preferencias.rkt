@@ -17,12 +17,6 @@
 (displayln "")
 
 
-(displayln "Carrera:")
-(displayln
- (Preferencias-carrera preferencias))
-
-(displayln "")
-
 (displayln "Creditos minimos:")
 (displayln
  (Preferencias-creditos-min preferencias))
@@ -72,9 +66,7 @@
 
   (lambda ([id : IdGrupo])
 
-    (string=?
-     (IdGrupo-carrera id)
-     (Preferencias-carrera preferencias)))
+    (not (string=? (IdGrupo-carrera id) "")))
 
   (Preferencias-grupos-interes preferencias)))
 
@@ -87,3 +79,17 @@
     (> (IdGrupo-grupo id) 0))
 
   (Preferencias-grupos-interes preferencias)))
+
+;; Las preferencias pueden incluir las dos carreras
+(define preferencias-mixtas
+  (leer-preferencias "../../datos/entrada/preferencias_mixtas_ejemplo.csv"))
+
+(check-true
+ (ormap (lambda ([id : IdGrupo])
+          (string=? (IdGrupo-carrera id) "Ingeniería en Computadores"))
+        (Preferencias-grupos-interes preferencias-mixtas)))
+
+(check-true
+ (ormap (lambda ([id : IdGrupo])
+          (string=? (IdGrupo-carrera id) "Ingeniería Ambiental"))
+        (Preferencias-grupos-interes preferencias-mixtas)))

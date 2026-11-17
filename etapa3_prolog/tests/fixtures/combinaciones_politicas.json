@@ -1,0 +1,153 @@
+{
+  "combinaciones": [
+    {
+      "creditos_totales": 7,
+      "selecciones": [
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "CE1101",
+          "grupo": 1,
+          "creditos": 3,
+          "area": "computacion"
+        },
+        {
+          "carrera": "Ingeniería Ambiental",
+          "codigo": "MA1102",
+          "grupo": 2,
+          "creditos": 4,
+          "area": "matematica"
+        }
+      ]
+    },
+    {
+      "creditos_totales": 11,
+      "selecciones": [
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "MA0101",
+          "grupo": 1,
+          "creditos": 2,
+          "area": "matematica"
+        },
+        {
+          "carrera": "Ingeniería Ambiental",
+          "codigo": "MA0101",
+          "grupo": 2,
+          "creditos": 2,
+          "area": "matematica"
+        },
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "CE1101",
+          "grupo": 1,
+          "creditos": 3,
+          "area": "computacion"
+        },
+        {
+          "carrera": "Ingeniería Ambiental",
+          "codigo": "MA1102",
+          "grupo": 2,
+          "creditos": 4,
+          "area": "matematica"
+        }
+      ]
+    },
+    {
+      "creditos_totales": 17,
+      "selecciones": [
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "MA0101",
+          "grupo": 1,
+          "creditos": 2,
+          "area": "matematica"
+        },
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "MA1102",
+          "grupo": 1,
+          "creditos": 4,
+          "area": "matematica"
+        },
+        {
+          "carrera": "Ingeniería Ambiental",
+          "codigo": "MA1102",
+          "grupo": 2,
+          "creditos": 4,
+          "area": "matematica"
+        },
+        {
+          "carrera": "Ingeniería Ambiental",
+          "codigo": "MA1103",
+          "grupo": 1,
+          "creditos": 4,
+          "area": "matematica"
+        },
+        {
+          "carrera": "Ingeniería Ambiental",
+          "codigo": "FI1101",
+          "grupo": 1,
+          "creditos": 3,
+          "area": "ciencias"
+        }
+      ]
+    },
+    {
+      "creditos_totales": 8,
+      "selecciones": [
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "CE1101",
+          "grupo": 1,
+          "creditos": 3,
+          "area": "computacion"
+        },
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "CE1104",
+          "grupo": 1,
+          "creditos": 3,
+          "area": "computacion"
+        },
+        {
+          "carrera": "Ingeniería Ambiental",
+          "codigo": "MA0101",
+          "grupo": 2,
+          "creditos": 2,
+          "area": "matematica"
+        }
+      ]
+    },
+    {
+      "creditos_totales": 4,
+      "selecciones": [
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "MA0101",
+          "grupo": 1,
+          "creditos": 2,
+          "area": "matematica"
+        },
+        {
+          "carrera": "Ingeniería Ambiental",
+          "codigo": "MA0101",
+          "grupo": 2,
+          "creditos": 2,
+          "area": "matematica"
+        }
+      ]
+    },
+    {
+      "creditos_totales": 3,
+      "selecciones": [
+        {
+          "carrera": "Ingeniería en Computadores",
+          "codigo": "CE1101",
+          "grupo": 1,
+          "creditos": 3,
+          "area": "computacion"
+        }
+      ]
+    }
+  ]
+}

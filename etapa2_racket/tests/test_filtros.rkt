@@ -10,19 +10,19 @@
 
 (define grupo-a
   (Grupo "Ingeniería en Computadores" "CE1101" 1 3
-         (list (Horario "LUN" 480 600))))
+         (list (Horario "LUN" 480 600)) "computacion"))
 (define grupo-b
   (Grupo "Ingeniería en Computadores" "MA1102" 2 4
-         (list (Horario "MAR" 540 660))))
+         (list (Horario "MAR" 540 660)) "matematica"))
 (define grupo-c
   (Grupo "Ingeniería en Computadores" "CE1103" 1 8
-         (list (Horario "MIE" 480 600))))
+         (list (Horario "MIE" 480 600)) "computacion"))
 
 (define combinacion-3 (Combinacion (list grupo-a) 3))
 (define combinacion-7 (Combinacion (list grupo-a grupo-b) 7))
 (define combinacion-8 (Combinacion (list grupo-c) 8))
 
-;; Se aceptan los limites del rango y se descartan los valores externos.
+;; Se comprueba el rango de creditos
 (check-true (creditos-validos? combinacion-3 3 7))
 (check-true (creditos-validos? combinacion-7 3 7))
 (check-false (creditos-validos? combinacion-8 3 7))
@@ -33,7 +33,7 @@
    (stream combinacion-3 combinacion-7 combinacion-8) 3 7))
  (list combinacion-3 combinacion-7))
 
-;; La misma funcion generica sirve con tipos diferentes.
+;; El filtro funciona con diferentes tipos de datos
 (check-equal?
  (stream->list (filtrar-stream even? (stream 1 2 3 4)))
  '(2 4))
@@ -43,27 +43,31 @@
                  (stream "sol" "luna" "casa")))
  '("luna" "casa"))
 
-;; Se comprueba el JSON sin depender del catalogo ni de las preferencias.
+;; Se comprueba la salida JSON
 (define ruta-prueba (make-temporary-file "cemestre-p4-~a.json"))
 
 (exportar-combinaciones ruta-prueba empty-stream)
 (check-equal?
  (call-with-input-file ruta-prueba read-json)
- (hash 'combinaciones '()))
+ (hasheq 'combinaciones '()))
 
 (exportar-combinaciones ruta-prueba (stream combinacion-7))
 (check-equal?
  (call-with-input-file ruta-prueba read-json)
- (hash 'combinaciones
+ (hasheq 'combinaciones
        (list
-        (hash 'creditos_totales 7
+        (hasheq 'creditos_totales 7
               'selecciones
               (list
-               (hash 'carrera "Ingeniería en Computadores"
+               (hasheq 'carrera "Ingeniería en Computadores"
                      'codigo "CE1101"
-                     'grupo 1)
-               (hash 'carrera "Ingeniería en Computadores"
+                     'grupo 1
+                     'creditos 3
+                     'area "computacion")
+               (hasheq 'carrera "Ingeniería en Computadores"
                      'codigo "MA1102"
-                     'grupo 2))))))
+                     'grupo 2
+                     'creditos 4
+                     'area "matematica"))))))
 
 (delete-file ruta-prueba)

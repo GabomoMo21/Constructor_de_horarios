@@ -52,7 +52,6 @@ evaluar_combinacion(Cursos, false, Razon, CursoAQuitar) :-
 
 buscar_curso_a_quitar(Cursos, CursoAQuitar) :-
     select(CursoAQuitar, Cursos, Restantes),
-    Restantes \= [],
     cumple_todas(Restantes),
     !.
 

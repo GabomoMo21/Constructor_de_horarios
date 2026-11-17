@@ -6,44 +6,42 @@
          "../tipos.rkt")
 
 (define a-g1 (Grupo "Computadores" "CE1101" 1 4
-                    (list (Horario "LUN" 480 540))))
+                    (list (Horario "LUN" 480 540)) "computacion"))
 (define a-g2 (Grupo "Computadores" "CE1101" 2 0
-                    (list (Horario "MAR" 480 540))))
-(define otra-carrera (Grupo "Software" "CE1101" 1 4 '()))
-(define b (Grupo "Computadores" "CE1102" 1 3 '()))
+                    (list (Horario "MAR" 480 540)) "computacion"))
+(define otra-carrera (Grupo "Software" "CE1101" 1 4 '() "computacion"))
+(define b (Grupo "Computadores" "CE1102" 1 3 '() "computacion"))
 (define preferencias
-  (Preferencias "Computadores"
+  (Preferencias
                 (list (IdGrupo "Computadores" "CE1101" 1)
                       (IdGrupo "Computadores" "CE1101" 2))
                 0 18))
 
-;; Cada grupo del curso es una alternativa, incluso si aporta cero créditos;
-;; el mismo código en otra carrera no se confunde y los repetidos se ignoran.
+;; Los grupos repetidos se ignoran y cada grupo es una alternativa
 (check-equal? (stream->list
                (generar-combinaciones
                 (list a-g1 a-g1 otra-carrera a-g2 b) preferencias))
               (list (Combinacion (list a-g1) 4)
                     (Combinacion (list a-g2) 0)))
 
-;; Se puede consumir una alternativa sin convertir todo el stream en lista.
+;; Se puede obtener la primera combinacion sin recorrer las demas
 (check-equal? (stream-first (generar-combinaciones (list a-g1 a-g2) preferencias))
               (Combinacion (list a-g1) 4))
 
-;; Sin grupos de interés habilitados no se emite la combinación vacía.
+;; No se genera una combinacion vacia
 (check-true (stream-empty? (generar-combinaciones (list b) preferencias)))
 
-;; c-choque se traslapa con a-g1; c-contiguo empieza justo cuando termina.
+;; Un horario contiguo no cuenta como choque
 (define c-choque (Grupo "Computadores" "CE1102" 1 3
-                        (list (Horario "LUN" 510 600))))
+                        (list (Horario "LUN" 510 600)) "computacion"))
 (define c-contiguo (Grupo "Computadores" "CE1102" 2 3
-                          (list (Horario "LUN" 540 600))))
+                          (list (Horario "LUN" 540 600)) "computacion"))
 
-;; Varios cursos: el choque elimina solo la pareja afectada y los bloques
-;; contiguos son compatibles.
+;; Las combinaciones con choque se descartan
 (check-equal? (stream->list
                (generar-combinaciones
                 (list a-g1 a-g2 c-choque c-contiguo)
-                (Preferencias "Computadores"
+                (Preferencias
                               (list (IdGrupo "Computadores" "CE1101" 1)
                                     (IdGrupo "Computadores" "CE1101" 2)
                                     (IdGrupo "Computadores" "CE1102" 1)
@@ -57,25 +55,25 @@
                     (Combinacion (list a-g2 c-choque) 3)
                     (Combinacion (list a-g2 c-contiguo) 3)))
 
-;; Un grupo con varios bloques choca aunque solo uno de ellos se traslape.
+;; Se comprueban todos los bloques de horario
 (define d-varios (Grupo "Computadores" "CE1103" 1 2
                         (list (Horario "MIE" 600 700)
-                              (Horario "LUN" 530 560))))
+                              (Horario "LUN" 530 560)) "computacion"))
 (check-equal? (stream->list
                (generar-combinaciones
                 (list a-g1 d-varios)
-                (Preferencias "Computadores"
+                (Preferencias
                               (list (IdGrupo "Computadores" "CE1101" 1)
                                     (IdGrupo "Computadores" "CE1103" 1))
                               0 18)))
               (list (Combinacion (list d-varios) 2)
                     (Combinacion (list a-g1) 4)))
 
-;; Un interés repetido en las preferencias no duplica combinaciones.
+;; Repetir preferencias no duplica combinaciones
 (check-equal? (stream->list
                (generar-combinaciones
                 (list a-g1 b)
-                (Preferencias "Computadores"
+                (Preferencias
                               (list (IdGrupo "Computadores" "CE1101" 1)
                                     (IdGrupo "Computadores" "CE1101" 1)
                                     (IdGrupo "Computadores" "CE1102" 1))
@@ -84,37 +82,37 @@
                     (Combinacion (list a-g1) 4)
                     (Combinacion (list a-g1 b) 7)))
 
-;; Los intereses sin grupo en el catálogo (inexistentes o no habilitados)
-;; se ignoran sin inventar grupos.
+;; Los grupos que no existen se ignoran
 (check-equal? (stream->list
                (generar-combinaciones
                 (list a-g1)
-                (Preferencias "Computadores"
+                (Preferencias
                               (list (IdGrupo "Computadores" "CE1101" 1)
                                     (IdGrupo "Computadores" "CE1101" 3)
                                     (IdGrupo "Computadores" "CE1104" 1))
                               0 18)))
               (list (Combinacion (list a-g1) 4)))
 
-;; Un interés de otra carrera no se mezcla, aunque comparta código y número.
+;; Un mismo codigo de carreras distintas se puede combinar
 (check-equal? (stream->list
                (generar-combinaciones
                 (list a-g1 otra-carrera)
-                (Preferencias "Computadores"
+                (Preferencias
                               (list (IdGrupo "Computadores" "CE1101" 1)
                                     (IdGrupo "Software" "CE1101" 1))
                               0 18)))
-              (list (Combinacion (list a-g1) 4)))
+              (list (Combinacion (list otra-carrera) 4)
+                    (Combinacion (list a-g1) 4)
+                    (Combinacion (list a-g1 otra-carrera) 8)))
 (check-equal? (stream->list
                (generar-combinaciones
                 (list a-g1 otra-carrera)
-                (Preferencias "Software"
+                (Preferencias
                               (list (IdGrupo "Software" "CE1101" 1))
                               0 18)))
               (list (Combinacion (list otra-carrera) 4)))
 
-;; Propiedades sobre todas las combinaciones de varios cursos: sin repetidas,
-;; un grupo por curso, créditos correctos y ninguna vacía.
+;; Cada combinacion debe tener cursos distintos y creditos correctos
 (: curso-de (-> Grupo (Pairof String String)))
 (define (curso-de grupo)
   (cons (Grupo-carrera grupo) (Grupo-codigo grupo)))
@@ -123,7 +121,7 @@
   (stream->list
    (generar-combinaciones
     (list a-g1 a-g2 b c-choque c-contiguo d-varios)
-    (Preferencias "Computadores"
+    (Preferencias
                   (list (IdGrupo "Computadores" "CE1101" 1)
                         (IdGrupo "Computadores" "CE1101" 2)
                         (IdGrupo "Computadores" "CE1102" 1)

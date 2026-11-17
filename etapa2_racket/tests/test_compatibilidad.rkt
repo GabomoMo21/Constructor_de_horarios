@@ -1,17 +1,13 @@
 
 #lang typed/racket
 
-;; ============================================================
-;; PRUEBAS DEL MODULO DE COMPATIBILIDAD
-;; ============================================================
+;; Pruebas de compatibilidad de horarios
 
 (require typed/rackunit
          "../tipos.rkt"
          "../compatibilidad.rkt")
 
-;; ============================================================
-;; 1. PRUEBAS DE CHOQUES ENTRE HORARIOS
-;; ============================================================
+;; Choques entre horarios
 
 (check-true
  (horarios-chocan?
@@ -28,23 +24,24 @@
   (Horario "LUN" 480 600)
   (Horario "MAR" 480 600)))
 
-;; ============================================================
-;; 2. PRUEBAS DE CHOQUES ENTRE GRUPOS
-;; ============================================================
+;; Choques entre grupos
 
 (define grupoA
   (Grupo "Computadores" "CE1101" 1 4
          (list (Horario "LUN" 480 600)
-               (Horario "MIE" 540 660))))
+               (Horario "MIE" 540 660))
+         "computacion"))
 
 (define grupoB
   (Grupo "Computadores" "MA1102" 1 4
          (list (Horario "MAR" 480 600)
-               (Horario "MIE" 600 720))))
+               (Horario "MIE" 600 720))
+         "matematica"))
 
 (define grupoC
   (Grupo "Computadores" "FI1101" 1 3
-         (list (Horario "JUE" 480 600))))
+         (list (Horario "JUE" 480 600))
+         "ciencias"))
 
 (check-true
  (grupos-chocan? grupoA grupoB))
@@ -53,15 +50,13 @@
  (grupos-chocan? grupoA grupoC))
 
 (define grupoVacio
-  (Grupo "Computadores" "QU1101" 1 3 '()))
+  (Grupo "Computadores" "QU1101" 1 3 '() "ciencias"))
 
 (check-false
  (grupos-chocan? grupoA grupoVacio))
 
 
-;; ============================================================
-;; 3. PRUEBAS DE COMPATIBILIDAD CON GRUPOS SELECCIONADOS
-;; ============================================================
+;; Grupos ya seleccionados
 
 (check-true
  (compatible-con-combinacion? grupoC (list grupoA)))
@@ -71,7 +66,8 @@
 
 (define grupoA2
   (Grupo "Computadores" "CE1101" 2 4
-         (list (Horario "VIE" 480 600))))
+         (list (Horario "VIE" 480 600))
+         "computacion"))
 
 (check-false
  (compatible-con-combinacion? grupoA2 (list grupoA)))

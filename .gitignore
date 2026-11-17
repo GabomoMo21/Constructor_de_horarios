@@ -1,5 +1,15 @@
-/.vs
+/.vs/
 *.exe
 *.out
 *.o
 cemestre
+
+# Archivos que generan Racket y las pruebas
+etapa2_racket/compiled/
+*.bak
+__pycache__/
+*.pyc
+
+# Resultados temporales de las etapas
+/datos/salida/combinaciones.json
+/datos/salida/resultados*.json
