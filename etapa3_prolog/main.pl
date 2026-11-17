@@ -1,7 +1,7 @@
 :- module(main, [ejecutar_etapa3/3, main/0]).
 
 :- encoding(utf8).
-:- use_module('cargador.pl', [cargar_combinaciones/2]).
+:- use_module('lector.pl', [cargar_combinaciones/2]).
 :- use_module('reglas.pl', [cargar_politica/1]).
 :- use_module('evaluador.pl', [evaluar_combinacion/4]).
 :- use_module('exportador.pl', [exportar_resultados/3]).
