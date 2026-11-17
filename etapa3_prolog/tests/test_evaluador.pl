@@ -2,7 +2,10 @@
 :- encoding(utf8).
 :- use_module(library(plunit)).
 :- use_module('../evaluador.pl').
-:- use_module('../reglas.pl', [cargar_politica/1]).
+:- use_module('../reglas.pl', [
+    cargar_politica/1,
+    cumple_todas/1
+]).
 
 :- begin_tests(primera_violacion, [
     setup(cargar_politica('etapa3_prolog/tests/fixtures/politica_reglas.pl'))
@@ -69,3 +72,35 @@ test(combinacion_rechazada) :-
     ).
 
 :- end_tests(evaluar_combinacion).
+
+:- begin_tests(buscar_curso_a_quitar, [
+    setup(cargar_politica('etapa3_prolog/tests/fixtures/politica_reglas.pl'))
+]).
+
+test(reparacion_posible) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PRUEBA01', 1, 3, computacion),
+        curso('Ingeniería en Computadores', 'PRUEBA02', 1, 3, computacion),
+        curso('Ingeniería en Computadores', 'PRUEBA03', 1, 3, computacion),
+        curso('Ingeniería Ambiental', 'PRUEBA04', 1, 3, ciencias),
+        curso('Ingeniería Ambiental', 'PRUEBA05', 1, 3, ingenieria)
+    ],
+    once((
+        buscar_curso_a_quitar(Cursos, CursoAQuitar),
+        assertion(CursoAQuitar ==
+            curso('Ingeniería en Computadores', 'PRUEBA01', 1, 3, computacion)),
+        select(CursoAQuitar, Cursos, Restantes),
+        cumple_todas(Restantes)
+    )).
+
+test(reparacion_imposible) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PI5516', 1, 4, gestion),
+        curso('Ingeniería Ambiental', 'AE5121', 1, 3, gestion)
+    ],
+    buscar_curso_a_quitar(Cursos, ninguna).
+
+test(lista_vacia) :-
+    buscar_curso_a_quitar([], ninguna).
+
+:- end_tests(buscar_curso_a_quitar).
