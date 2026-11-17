@@ -41,3 +41,31 @@ test(combinacion_valida, [fail]) :-
     primera_violacion(Cursos, _).
 
 :- end_tests(primera_violacion).
+
+:- begin_tests(evaluar_combinacion, [
+    setup(cargar_politica('etapa3_prolog/tests/fixtures/politica_reglas.pl'))
+]).
+
+test(combinacion_aceptada) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'CE1101', 1, 3, computacion),
+        curso('Ingeniería Ambiental', 'AI1100', 1, 3, ingenieria)
+    ],
+    evaluar_combinacion(Cursos, true, ninguna, ninguna).
+
+test(combinacion_rechazada) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PI5516', 1, 4, gestion),
+        curso('Ingeniería Ambiental', 'AE5121', 1, 3, gestion)
+    ],
+    evaluar_combinacion(
+        Cursos,
+        false,
+        incompatibilidad(
+            curso('Ingeniería en Computadores', 'PI5516'),
+            curso('Ingeniería Ambiental', 'AE5121')
+        ),
+        ninguna
+    ).
+
+:- end_tests(evaluar_combinacion).
