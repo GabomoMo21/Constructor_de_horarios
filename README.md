@@ -587,7 +587,9 @@ X = curso('Ingeniería en Computadores', 'CE1111').
 
 `creditos_de_carrera/3` funciona igual que `cursos_de_area/3` y `par_incompatible/3` enumera por backtracking todos los pares incompatibles de una combinación.
 
-**Pruebas** (desde la raíz del repositorio; 26 casos: simetría, `N` frente a `N+1`, porcentaje exacto frente a superado, cero créditos, política editada e inválida):
+**Caso en que el orden de las reglas cambia la razón:** con `max_cursos_area(2)`, la combinación `PI5516` (Computadores, gestión, 4 créditos) + `AE5121` (Ambiental, gestión, 4) + `AE4208` (Ambiental, gestión, 2) incumple dos reglas: el par `PI5516`↔`AE5121` es incompatible y hay 3 cursos de gestión. Con el orden acordado (incompatibilidad → área → balance) se reporta `incompatibilidad(...)`; si el área se evaluara primero, la razón sería `limite_area(gestion, 3)`. El balance se cumple (40 % y 60 %). Se prioriza la incompatibilidad porque no se arregla cambiando de grupo: indica que se eligió dos veces el mismo contenido.
+
+**Pruebas** (desde la raíz del repositorio; 27 casos: simetría, dos reglas incumplidas a la vez, `N` frente a `N+1`, porcentaje exacto frente a superado, cero créditos, política editada e inválida):
 
 ```bash
 swipl -q -g run_tests -t halt etapa3_prolog/tests/test_reglas.pl

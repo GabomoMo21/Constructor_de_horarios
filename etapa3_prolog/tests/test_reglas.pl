@@ -135,6 +135,18 @@ test(falla_si_una_regla_falla, [fail]) :-
 test(lista_vacia_cumple) :-
     cumple_todas([]).
 
+% Una combinación puede violar varias reglas a la vez: cada regla detecta la
+% suya y el evaluador decide cuál reportar según el orden acordado.
+test(dos_reglas_incumplidas) :-
+    ce('PI5516', 4, gestion, A), ia('AE5121', 4, gestion, B),
+    ia('AE4208', 2, gestion, C),
+    violacion_incompatibilidad([A, B, C], RI),
+    RI == incompatibilidad(curso('Ingeniería en Computadores', 'PI5516'),
+                           curso('Ingeniería Ambiental', 'AE5121')),
+    violacion_area([A, B, C], RA),
+    RA == limite_area(gestion, 3),
+    cumple_balance([A, B, C]).
+
 :- end_tests(cumple_todas).
 
 :- begin_tests(politica).
