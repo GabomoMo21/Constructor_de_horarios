@@ -1,8 +1,8 @@
 # CEmestre
 
-CEmestre es el proyecto del curso **Paradigmas de Programación (CE1106)**. El proyecto se desarrolla por etapas y cada una utiliza un paradigma distinto. La **Etapa 1 (C)** valida el catálogo y lo exporta para la **Etapa 2 (Racket)**, que genera y filtra combinaciones y las escribe para su uso posterior en Prolog.
+CEmestre es el proyecto del curso **Paradigmas de Programación (CE1106)**. Cada etapa usa un paradigma diferente y se ejecuta como un programa independiente que lee y genera archivos.
 
-Las etapas son programas independientes que se comunican mediante archivos. C escribe `datos/salida/catalogo_procesado.csv`; Racket utiliza ese catálogo y `datos/entrada/preferencias.csv` para producir las combinaciones en JSON.
+La **Etapa 1 (C)** construye el catálogo validado de cursos, la **Etapa 2 (Racket)** genera combinaciones de horario y la **Etapa 3 (Prolog)** evalúa esas combinaciones con reglas de política académica. El resultado de Prolog se exporta en JSON para su lectura desde Java en la cuarta etapa.
 
 ## Funcionalidad de la Etapa 1
 
@@ -22,7 +22,8 @@ El programa no genera un horario final ni selecciona combinaciones de cursos. Es
 ```text
 Constructor_de_horarios/
 ├── README.md
-├── .gitignore
+├── ejecutar.ps1
+├── pruebas.ps1
 ├── etapa1_c/
 │   ├── main.c
 │   ├── constantes.h
@@ -44,23 +45,29 @@ Constructor_de_horarios/
 │   ├── filtros.rkt
 │   ├── exportador.rkt
 │   ├── main.rkt
-│   ├── readme_lector.md
 │   └── tests/
-│       ├── test_lector.rkt
-│       ├── test_preferencias.rkt
-│       ├── test_integracion_lectores.rkt
-│       ├── test_compatibilidad.rkt
-│       ├── test_generador.rkt
-│       └── test_filtros.rkt
+├── etapa3_prolog/
+│   ├── modelo.pl
+│   ├── lector.pl
+│   ├── politica.pl
+│   ├── reglas.pl
+│   ├── evaluador.pl
+│   ├── exportador.pl
+│   ├── main.pl
+│   └── tests/
 └── datos/
     ├── entrada/
     │   ├── horarios.csv
     │   ├── historial.csv
-    │   └── preferencias.csv
+    │   ├── preferencias.csv
+    │   └── preferencias_mixtas_ejemplo.csv
     └── salida/
         ├── catalogo_procesado.csv
-        └── combinaciones.json  (al ejecutar Racket)
+        ├── combinaciones.json
+        └── resultados.json
 ```
+
+Los programas se conectan mediante el CSV de C y los JSON de Racket y Prolog. `ejecutar.ps1` ejecuta las tres etapas en ese orden y `pruebas.ps1` realiza las pruebas de cada lenguaje y de la integración.
 
 La separación se hizo por responsabilidad. `main.c` mantiene el orden general de ejecución y cada módulo contiene una parte específica del procesamiento.
 
@@ -84,10 +91,10 @@ La separación se hizo por responsabilidad. `main.c` mantiene el orden general d
 `datos/entrada/horarios.csv` contiene cursos de Ingeniería en Computadores e Ingeniería Ambiental con las siguientes columnas:
 
 ```text
-Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos
+Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,Area
 ```
 
-Los horarios conservan el grupo y sus bloques de día y hora. Por ejemplo:
+La columna `Area` se agrega para las reglas de Prolog. Los horarios conservan el grupo y sus bloques de día y hora. Por ejemplo:
 
 ```text
 G1=MIE[07:30-09:20];VIE[07:30-09:20]
@@ -244,7 +251,7 @@ Se eligió CSV porque mantiene una estructura sencilla, es fácil de revisar y p
 Cada fila incluye:
 
 ```text
-Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,TieneChoque,PuedeMatricular
+Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,TieneChoque,PuedeMatricular,Area
 ```
 
 Se agregó `Carrera` porque es necesaria para distinguir códigos compartidos entre los dos planes.
@@ -353,7 +360,7 @@ datos/salida/catalogo_procesado.csv  datos/entrada/preferencias.csv
 | `tipos.rkt` | Define las estructuras compartidas de Typed Racket. |
 | `utilidades_csv.rkt` | Separa campos CSV respetando comillas y convierte números. |
 | `lector_catalogo.rkt` | Lee la salida de C y construye grupos con sus bloques horarios. |
-| `lector_preferencias.rkt` | Lee la carrera, grupos de interés y el rango de créditos. |
+| `lector_preferencias.rkt` | Lee los grupos de interés con su carrera y el rango de créditos. |
 | `compatibilidad.rkt` | Verifica traslapes y evita elegir dos grupos del mismo curso. |
 | `generador.rkt` | Explora subconjuntos y alternativas por curso mediante streams y poda temprana. |
 | `filtros.rkt` | Define un filtro polimórfico y aplica el rango de créditos. |
@@ -368,8 +375,8 @@ Se eligió **Typed Racket** para declarar los tipos de las funciones y detectar 
 |---|---|---|
 | `Horario` | `dia`, `inicio`, `fin` | Bloque horario con horas convertidas a minutos. |
 | `IdGrupo` | `carrera`, `codigo`, `grupo` | Identificador ligero de un grupo solicitado. |
-| `Grupo` | `carrera`, `codigo`, `numero`, `creditos`, `horarios` | Alternativa completa del catálogo, con varios bloques si corresponde. |
-| `Preferencias` | `carrera`, `grupos-interes`, `creditos-min`, `creditos-max` | Restricciones proporcionadas por el estudiante. |
+| `Grupo` | `carrera`, `codigo`, `numero`, `creditos`, `horarios`, `area` | Alternativa completa del catálogo, con varios bloques si corresponde. |
+| `Preferencias` | `grupos-interes`, `creditos-min`, `creditos-max` | Restricciones proporcionadas por el estudiante. |
 | `Combinacion` | `grupos`, `creditos-totales` | Resultado parcial o completo de la búsqueda, con total acumulado. |
 
 Se identifica un curso por **carrera y código**, y un grupo por **carrera, código y número**. Esto importa porque las dos carreras pueden contener códigos iguales. Los identificadores de las preferencias no duplican horarios ni créditos: el catálogo sigue siendo la fuente de esos datos.
@@ -381,7 +388,7 @@ El generador usa temporalmente `(Listof (Listof Grupo))`: cada sublista contiene
 **Catálogo procesado:** `datos/salida/catalogo_procesado.csv`, generado por la Etapa 1.
 
 ```text
-Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,TieneChoque,PuedeMatricular
+Carrera,Codigo,Nombre,Creditos,Horarios,Requisitos,Correquisitos,TieneChoque,PuedeMatricular,Area
 ```
 
 `leer-catalogo` incorpora únicamente grupos de cursos con `PuedeMatricular=SI`. Lee cada grupo `G1=...`, separa sus bloques horarios y transforma las horas `HH:MM` en minutos, para que la compatibilidad se calcule con enteros. Si un curso tiene `Horarios=No hay`, no se crea un grupo seleccionable para ese curso.
@@ -397,7 +404,7 @@ Ingeniería en Computadores,CE1101,G4,3,7
 Ingeniería en Computadores,MA1102,G2,3,7
 ```
 
-El ejemplo muestra el formato, no necesariamente los datos del archivo de preferencias entregado. Cada fila identifica un grupo aceptable; pueden indicarse varios grupos de un mismo curso. Las filas deben tener la misma carrera y el mismo rango de créditos. El lector rechaza rangos negativos o con mínimo mayor que máximo, así como grupos mal escritos, y conserva los intereses leídos como `IdGrupo`.
+El ejemplo muestra el formato, no necesariamente los datos del archivo de preferencias entregado. Cada fila identifica un grupo aceptable; pueden indicarse varios grupos de un mismo curso. Las filas pueden mezclar carreras, pero deben tener el mismo rango de créditos. El lector rechaza rangos negativos o con mínimo mayor que máximo, así como grupos mal escritos, y conserva los intereses leídos como `IdGrupo`.
 
 El lector de preferencias **no elimina intereses repetidos**. El generador evita incorporar opciones duplicadas con la lista `vistos`. Si se solicita un grupo inexistente o no habilitado, el generador no lo selecciona: actualmente ese caso no detiene la ejecución con un error del lector.
 
@@ -414,7 +421,7 @@ Se utiliza `<` y no `<=` para permitir que una clase termine exactamente cuando 
 
 ### Decisiones de generación y optimización
 
-1. **Opciones agrupadas por curso.** `seleccionar-opciones` conserva únicamente grupos de la carrera e intereses indicados y descarta identificadores repetidos. `agrupar-opciones` reúne las alternativas del mismo curso.
+1. **Opciones agrupadas por curso.** `seleccionar-opciones` conserva únicamente los grupos indicados en las preferencias y descarta identificadores repetidos. `agrupar-opciones` reúne las alternativas del mismo curso.
 2. **Subconjuntos permitidos.** `explorar-cursos` puede omitir un curso o elegir uno de sus grupos. De esta manera genera alternativas con distintos subconjuntos de los cursos de interés, pero nunca incluye dos grupos del mismo curso ni entrega la combinación completamente vacía. Este comportamiento fue consultado al profesor y confirmado como válido siempre que se respeten las preferencias.
 3. **Recursión e inmutabilidad.** Los cursos pendientes, los grupos elegidos y la suma de créditos pasan como parámetros. Se agrega un grupo con `cons` y se invierte la selección con `reverse` al construir una `Combinacion`, sin utilizar `set!`.
 4. **Streams reales.** `explorar-cursos`, `explorar-opciones` y `concatenar` construyen la salida con `stream`, `stream-cons` y `empty-stream`, no mediante una lista completa. `concatenar` recibe la siguiente rama como función para evaluarla cuando sea necesaria.
@@ -447,15 +454,15 @@ La salida de Racket es **JSON UTF-8**, acordado como contrato hacia la Etapa 3. 
     {
       "creditos_totales": 7,
       "selecciones": [
-        {"carrera": "Ingeniería en Computadores", "codigo": "CE1101", "grupo": 1},
-        {"carrera": "Ingeniería en Computadores", "codigo": "MA1102", "grupo": 2}
+        {"carrera": "Ingeniería en Computadores", "codigo": "CE1101", "grupo": 1, "creditos": 3, "area": "computacion"},
+        {"carrera": "Ingeniería en Computadores", "codigo": "MA1102", "grupo": 2, "creditos": 4, "area": "matematica"}
       ]
     }
   ]
 }
 ```
 
-**Por qué JSON:** la relación entre una combinación y sus grupos se representa directamente mediante un arreglo anidado. En CSV habría que repetir datos de la combinación en varias filas o agregar un identificador para agruparlas. Generar hechos Prolog también habría sido posible, pero acoplaría el archivo a ese lenguaje. JSON mantiene una estructura que puede leer la etapa siguiente y que también resulta útil para una futura integración con Java; Prolog deberá interpretarla.
+**Por qué JSON:** la relación entre una combinación y sus grupos se representa directamente mediante un arreglo anidado. En CSV habría que repetir datos de la combinación en varias filas o agregar un identificador para agruparlas. Generar hechos Prolog también habría sido posible, pero acoplaría el archivo a ese lenguaje. JSON mantiene una estructura que Prolog puede leer y que Java también puede consumir.
 
 **Cómo se escribe:** `exportador.rkt` recorre el stream con `stream-first` y `stream-rest`; cada elemento se escribe antes de solicitar el siguiente. `escribir-grupos` recorre recursivamente la lista interna de cada combinación. Para insertar comas se pasa el parámetro `primero?`, sin mantener contadores mutables. Se utiliza `display` para la estructura fija y `write-json` para escapar correctamente los valores.
 
@@ -523,13 +530,13 @@ Los archivos incluidos en `etapa2_racket/tests/` revisan distintas partes del pr
 | Archivo | Qué comprueba |
 |---|---|
 | `test_lector.rkt` | Lectura de grupos, créditos y bloques horarios del catálogo. |
-| `test_preferencias.rkt` | Carrera consistente, rango de créditos válido e identificadores de interés. No exige unicidad en el archivo de entrada. |
+| `test_preferencias.rkt` | Lectura de los grupos solicitados, rango de créditos e identificadores de interés, incluidas varias carreras. No exige unicidad en el archivo de entrada. |
 | `test_integracion_lectores.rkt` | Que los grupos solicitados aparezcan entre los grupos disponibles del catálogo utilizado. |
 | `test_compatibilidad.rkt` | Traslapes, horarios contiguos y compatibilidad de grupos. |
 | `test_generador.rkt` y el submódulo de `generador.rkt` | Alternativas, subconjuntos, poda temprana, créditos acumulados e intereses repetidos. |
 | `test_filtros.rkt` | Límites de créditos, uso polimórfico del filtro y exportación JSON vacía o con resultados. |
 
-Desde la raíz se pueden ejecutar las pruebas independientes de compatibilidad, generación y Persona 4:
+Desde la raíz se pueden ejecutar las pruebas independientes de compatibilidad, generación y filtros:
 
 ```powershell
 raco test etapa2_racket/compatibilidad.rkt etapa2_racket/generador.rkt etapa2_racket/tests/test_compatibilidad.rkt etapa2_racket/tests/test_generador.rkt etapa2_racket/tests/test_filtros.rkt
@@ -546,51 +553,179 @@ cd ../..
 
 ### Alcance de esta entrega
 
-La Etapa 2 genera y filtra alternativas para una carrera en cada ejecución. No recomienda cursos, no presenta horarios definitivos y no aplica reglas adicionales de la Etapa 3. El contrato de salida será utilizado posteriormente por Prolog.
+La Etapa 2 genera y filtra alternativas a partir de los grupos elegidos en `preferencias.csv`, que pueden incluir ambas carreras. No recomienda cursos, no presenta horarios definitivos y no aplica las reglas de la Etapa 3. El contrato de salida es el JSON que recibe Prolog.
 
-## Etapa 3: política académica (Prolog)
+## Etapa 3: evaluación de política académica (Prolog)
 
-### Dependencias adicionales de la Etapa 3
+### Objetivo y funcionamiento
 
-Todo `etapa3_prolog/` necesita **SWI-Prolog** (probado con 10.0.2). En Windows: `winget install SWI-Prolog.SWI-Prolog`; queda en `C:\Program Files\swipl\bin\` (agregarlo a PATH o usar la ruta completa). Verificar con `swipl --version`.
+La Etapa 3 recibe las combinaciones generadas por Racket y las compara con tres políticas académicas: incompatibilidades entre cursos, límite de cursos por área y balance de créditos entre carreras. Para cada combinación determina si cumple todas las reglas o cuál es la primera regla incumplida. La etapa no crea horarios, no vuelve a filtrar por créditos y no presenta una interfaz gráfica.
 
-### Reglas de política (`reglas.pl` y `politica.pl`)
+```text
+combinaciones.json ──> lector.pl ──> combinacion(Id, Cursos)
+                                           |
+politica.pl ─────────> reglas.pl ──────────> evaluador.pl
+                                           |
+                                      exportador.pl
+                                           |
+                                      resultados.json
+```
 
-`politica.pl` contiene solo hechos editables; `reglas.pl` no tiene ningún límite escrito en el código. `cargar_politica/1` lee el archivo como términos, valida cada hecho (`max_porcentaje/2` entre 0 y 100, exactamente un `max_cursos_area/1`, `incompatibles/2` sobre `curso(Carrera, Codigo)`) y solo entonces reemplaza la política anterior; si el archivo es inválido lanza `politica_invalida(...)` y conserva la anterior. Es el único uso de `assert/retract`, permitido para cargar datos de entrada.
+`main.pl` coordina la carga, la evaluación y la exportación. El evaluador aplica las reglas, mientras que el exportador transforma los resultados a JSON para que Java pueda leerlos sin repetir las validaciones.
 
-| Regla | Predicado de violación | Razón devuelta | Criterio |
-|:--|:--|:--|:--|
-| Incompatibilidad | `violacion_incompatibilidad/2` | `incompatibilidad(curso(CarA, CodA), curso(CarB, CodB))` | primer par en el orden de la combinación |
-| Límite por área | `violacion_area/2` | `limite_area(Area, Cantidad)` | `Cantidad > N`; tener exactamente `N` cumple |
-| Balance | `violacion_balance/2` | `balance(Carrera, Maximo)` | `Creditos * 100 > Maximo * Total`, sin redondeo; con 0 créditos totales cumple |
+### Módulos y responsabilidades
 
-Cada `violacion_*` usa corte para devolver solo la primera infracción, y `cumple_incompatibilidad/1`, `cumple_area/1` y `cumple_balance/1` son su negación por falla (`\+`). `cumple_todas/1` las combina y es el único predicado que necesita el evaluador, también para el extra de quitar un curso. Una carrera sin `max_porcentaje/2` no tiene límite (100 %).
+| Archivo | Responsabilidad |
+|---|---|
+| `modelo.pl` | Define las consultas sobre los términos `curso/5` y el cálculo de créditos. |
+| `lector.pl` | Lee el JSON de Racket y construye combinaciones con términos de Prolog. |
+| `politica.pl` | Contiene los hechos que definen los valores de la política académica. |
+| `reglas.pl` | Carga los hechos de política y comprueba las tres reglas. |
+| `evaluador.pl` | Determina la primera violación y busca un curso que pueda eliminarse. |
+| `exportador.pl` | Recorre las combinaciones, utiliza el evaluador y genera el JSON final. |
+| `main.pl` | Conecta los módulos y recibe las rutas desde la línea de comandos. |
 
-**Pares incompatibles declarados** (cursos equivalentes entre los dos planes; la relación es simétrica, basta declararla una vez):
+### Representación de los datos y carga
 
-- `PI5516` Ingeniería económica (Computadores) ↔ `AE5121` Ingeniería económica (Ambiental): mismo curso con distinto código.
-- `CE1111` Análisis numérico para la ingeniería ↔ `MA3106` Métodos numéricos: misma base de cálculo numérico.
-- `PI2609` Probabilidad y estadística ↔ `AI2101` Análisis estadístico para ingeniería ambiental: el curso de estadística de cada plan.
-- `MA0101` Matemática general en ambas carreras: llevarlo dos veces sería repetirlo.
-
-**Predicados usables en más de un modo:**
+La entrada es `datos/salida/combinaciones.json`. Cada selección incluye la carrera, el código, el grupo, los créditos y el área. El lector convierte cada combinación a un término de esta forma:
 
 ```prolog
-?- son_incompatibles(curso('Ingeniería en Computadores','PI5516'),
-                     curso('Ingeniería Ambiental','AE5121')).   % verificar (en cualquier sentido)
+combinacion(Id, [
+    curso(Carrera, Codigo, Grupo, Creditos, Area)
+]).
+```
+
+La lista conserva los cursos elegidos y el identificador mantiene su posición en el archivo. Las carreras, códigos y áreas se representan como átomos; los grupos y créditos se manejan como enteros. Se utiliza una lista de `combinacion/2` y los resultados intermedios se transmiten mediante argumentos, sin mantenerlos en variables globales.
+
+El campo `Area` se definió por curso en `horarios.csv` y se transmite a Prolog a través de C y Racket. Se usa un conjunto común de áreas para las dos carreras: `matematica`, `ciencias`, `computacion`, `ingenieria`, `humanidades` y `gestion`. Por ejemplo, `MA0101` corresponde a `matematica`, `CE1101` a `computacion` y `AI1100` a `ingenieria`. La clasificación utiliza el contenido del curso y no únicamente el prefijo del código.
+
+### Archivo de política y reglas
+
+Los valores de las políticas se guardan como hechos en `etapa3_prolog/politica.pl`. Se separan del código para que puedan modificarse durante la defensa sin reescribir los predicados.
+
+```prolog
+max_porcentaje('Ingeniería en Computadores', 70).
+max_porcentaje('Ingeniería Ambiental', 70).
+max_cursos_area(3).
+incompatibles(curso('Ingeniería en Computadores', 'MA0101'),
+              curso('Ingeniería Ambiental', 'MA0101')).
+```
+
+`cargar_politica/1` lee y valida los hechos del archivo. Los únicos predicados dinámicos se utilizan para almacenar esa política de entrada; no se emplea `assert/retract` para resultados de las combinaciones.
+
+| Regla | Predicado | Criterio |
+|---|---|---|
+| Incompatibilidades | `violacion_incompatibilidad/2` | Rechaza si aparecen ambos cursos de un par declarado, sin importar el orden. |
+| Límite por área | `violacion_area/2` | Rechaza si la cantidad de cursos en alguna área es mayor que `max_cursos_area/1`. |
+| Balance | `violacion_balance/2` | Rechaza si alguna carrera supera su porcentaje máximo de los créditos totales. |
+
+Para balance se compara `CreditosCarrera * 100 > Maximo * CreditosTotales`, evitando divisiones y redondeos. Si los créditos totales son cero, ninguna carrera supera su porcentaje. Una carrera sin hecho `max_porcentaje/2` se interpreta con un máximo de 100 %.
+
+Las incompatibilidades se declaran una sola vez; `son_incompatibles/2` permite consultarlas en ambos sentidos. Los pares escogidos corresponden a contenidos repetidos o semejantes entre los planes:
+
+- `PI5516` y `AE5121`: ambos se denominan Ingeniería económica, aunque usan códigos distintos.
+- `CE1111` y `MA3106`: Análisis numérico para la ingeniería y Métodos numéricos cubren métodos de cálculo numérico.
+- `PI2609` y `AI2101`: Probabilidad y estadística y Análisis estadístico para ingeniería ambiental cubren contenidos de estadística.
+- `MA0101` de Computadores y `MA0101` de Ambiental: se trata de Matemática general, presente en ambos planes.
+
+### Primera regla violada
+
+Se acordó el orden **incompatibilidad → área → balance**. Primero se comprueban los pares concretos de cursos, luego la cantidad de cursos de cada área y finalmente el porcentaje global de créditos. `primera_violacion/2` prueba las reglas en ese orden y utiliza el corte (`!`) para conservar únicamente la primera razón. Los predicados `cumple_incompatibilidad/1`, `cumple_area/1` y `cumple_balance/1` usan negación por falla (`\+`) para expresar cumplimiento.
+
+Por ejemplo, con `max_cursos_area(2)`, los cursos `PI5516` de Computadores (3 créditos), `AE5121` de Ambiental (3 créditos) y `AE4208` de Ambiental (4 créditos) suman 10 créditos. Hay una incompatibilidad entre los dos primeros y tres cursos del área `gestion`. El balance es de 30 % y 70 %, dentro de los máximos de la política. Con el orden elegido se informa `incompatibilidad(...)`; si se revisara el área primero, se informaría `limite_area(gestion, 3)`.
+
+### Consultas en más de un modo
+
+`son_incompatibles/2` sirve tanto para comprobar un par conocido como para buscar el curso incompatible con otro. Por ejemplo, después de cargar `reglas.pl` en SWI-Prolog:
+
+```prolog
+?- reglas:cargar_politica('etapa3_prolog/politica.pl').
 true.
-?- son_incompatibles(curso('Ingeniería Ambiental','MA3106'), X). % enumerar
+
+?- reglas:son_incompatibles(
+       curso('Ingeniería en Computadores', 'PI5516'),
+       curso('Ingeniería Ambiental', 'AE5121')).
+true.
+
+?- reglas:son_incompatibles(
+       curso('Ingeniería Ambiental', 'MA3106'), X).
 X = curso('Ingeniería en Computadores', 'CE1111').
-?- cursos_de_area(Cursos, matematica, N).    % contar un área dada
-?- cursos_de_area(Cursos, Area, N).          % enumerar cada área presente con su cantidad
 ```
 
-`creditos_de_carrera/3` funciona igual que `cursos_de_area/3` y `par_incompatible/3` enumera por backtracking todos los pares incompatibles de una combinación.
+`creditos_de_carrera/3` también puede recibir una carrera específica para calcular sus créditos o una carrera libre para enumerar las carreras presentes. Esto aprovecha la unificación y el backtracking de Prolog sin crear predicados separados para cada consulta.
 
-**Caso en que el orden de las reglas cambia la razón:** con `max_cursos_area(2)`, la combinación `PI5516` (Computadores, gestión, 4 créditos) + `AE5121` (Ambiental, gestión, 4) + `AE4208` (Ambiental, gestión, 2) incumple dos reglas: el par `PI5516`↔`AE5121` es incompatible y hay 3 cursos de gestión. Con el orden acordado (incompatibilidad → área → balance) se reporta `incompatibilidad(...)`; si el área se evaluara primero, la razón sería `limite_area(gestion, 3)`. El balance se cumple (40 % y 60 %). Se prioriza la incompatibilidad porque no se arregla cambiando de grupo: indica que se eligió dos veces el mismo contenido.
+### Requisito adicional para cuatro integrantes
 
-**Pruebas** (desde la raíz del repositorio; 27 casos: simetría, dos reglas incumplidas a la vez, `N` frente a `N+1`, porcentaje exacto frente a superado, cero créditos, política editada e inválida):
+Para cada combinación rechazada, `buscar_curso_a_quitar/2` utiliza `select/3` para elegir un curso y obtener la lista restante. Luego aplica `cumple_todas/1` sobre esa lista, reutilizando las tres validaciones. Se devuelve el primer curso que permite cumplir las reglas; si ninguno sirve, la respuesta es `ninguna`.
 
-```bash
-swipl -q -g run_tests -t halt etapa3_prolog/tests/test_reglas.pl
+También se contempla la eliminación del único curso de una combinación: si la lista vacía resultante cumple las políticas, ese curso es una solución válida. En cambio, eliminar un curso de un par incompatible puede no ser suficiente cuando los créditos restantes superan el balance máximo de una carrera.
+
+### Formato de salida para Java
+
+La salida es `datos/salida/resultados.json`. Se eligió JSON por la estructura de listas de cursos y porque permite representar el veredicto y la razón como campos definidos, sin requerir que Java analice cadenas de texto.
+
+```json
+{
+  "resultados": [
+    {
+      "id": 1,
+      "creditos_totales": 7,
+      "selecciones": [
+        {"carrera": "Ingeniería en Computadores", "codigo": "CE1101", "grupo": 1, "creditos": 3, "area": "computacion"},
+        {"carrera": "Ingeniería Ambiental", "codigo": "MA1102", "grupo": 2, "creditos": 4, "area": "matematica"}
+      ],
+      "cumple": true,
+      "razon": null,
+      "curso_a_quitar": null
+    }
+  ]
+}
 ```
+
+Para una combinación rechazada, `cumple` es `false`, `razon` indica la regla y su detalle, y `curso_a_quitar` contiene carrera, código y grupo cuando existe una eliminación válida. `null` significa que no corresponde una razón o que no existe un curso cuya eliminación solucione el rechazo.
+
+### Casos límite y pruebas
+
+El proyecto contempla combinaciones con cero créditos, un porcentaje exactamente igual al máximo permitido, un área con exactamente el número de cursos permitido, varias reglas incumplidas al mismo tiempo y rechazos que no pueden resolverse quitando un curso. El lector y el exportador también manejan listas vacías de combinaciones.
+
+Las pruebas automatizadas usan `plunit` para reglas, evaluador, exportación e integración. Los ejemplos de entrada están en `etapa3_prolog/tests/fixtures/`, de modo que las políticas y sus resultados se pueden comprobar sin modificar los datos normales del proyecto.
+
+## Ejecución y pruebas en Windows
+
+Desde la raíz del repositorio se utilizan **PowerShell**, GCC, Racket y SWI-Prolog. Se requieren `gcc`, `racket`, `raco` y `swipl`. Los scripts incluyen las rutas habituales de instalación de Racket y SWI-Prolog en Windows.
+
+### Ejecutar las tres etapas
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\ejecutar.ps1
+```
+
+Este comando compila C, genera `catalogo_procesado.csv`, ejecuta Racket con `datos/entrada/preferencias.csv` y finalmente evalúa sus combinaciones con Prolog. El resultado se escribe en `datos/salida/resultados.json`.
+
+Para generar un ejemplo con cursos de ambas carreras:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\ejecutar.ps1 -Preferencias datos/entrada/preferencias_mixtas_ejemplo.csv
+```
+
+La política puede elegirse mediante `-Politica` para probar otros parámetros con el mismo programa.
+
+### Ejecutar las pruebas
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\pruebas.ps1
+```
+
+El script ejecuta las pruebas de Prolog y Racket, comprueba cuatro combinaciones básicas y otros seis casos para demostrar los tres motivos de rechazo y la eliminación de un curso. La tabla que aparece en la terminal muestra el veredicto, la primera regla violada y el curso que se puede quitar. También ejecuta las tres etapas con preferencias de ambas carreras. Los resultados quedan en `datos/salida/resultados_politicas.json` y `datos/salida/resultados.json`.
+
+Los seis casos de `combinaciones_politicas.json` incluyen una combinación aceptada, un rechazo por incompatibilidad, uno por área, uno por balance, una incompatibilidad que no se resuelve quitando un solo curso y un rechazo de un único curso que sí se puede corregir. La prueba de integración comprueba que las bajas propuestas realmente cumplan las tres políticas.
+
+`ejecutar.ps1` muestra también los resultados de la ejecución normal en una tabla, además de guardar el JSON para Java.
+
+Para ejecutar Prolog de forma independiente también se puede utilizar:
+
+```powershell
+swipl -q -s etapa3_prolog/main.pl -- datos/salida/combinaciones.json etapa3_prolog/politica.pl datos/salida/resultados.json
+```
+
+Los resultados generados pueden abrirse directamente como JSON. Cada etapa conserva su ejecutable o intérprete propio; los scripts únicamente organizan las llamadas y los archivos de intercambio.
