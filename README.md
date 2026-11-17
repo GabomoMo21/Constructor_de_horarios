@@ -547,3 +547,50 @@ cd ../..
 ### Alcance de esta entrega
 
 La Etapa 2 genera y filtra alternativas para una carrera en cada ejecución. No recomienda cursos, no presenta horarios definitivos y no aplica reglas adicionales de la Etapa 3. El contrato de salida será utilizado posteriormente por Prolog.
+
+## Etapa 3: política académica (Prolog)
+
+### Dependencias adicionales de la Etapa 3
+
+Todo `etapa3_prolog/` necesita **SWI-Prolog** (probado con 10.0.2). En Windows: `winget install SWI-Prolog.SWI-Prolog`; queda en `C:\Program Files\swipl\bin\` (agregarlo a PATH o usar la ruta completa). Verificar con `swipl --version`.
+
+### Reglas de política (`reglas.pl` y `politica.pl`)
+
+`politica.pl` contiene solo hechos editables; `reglas.pl` no tiene ningún límite escrito en el código. `cargar_politica/1` lee el archivo como términos, valida cada hecho (`max_porcentaje/2` entre 0 y 100, exactamente un `max_cursos_area/1`, `incompatibles/2` sobre `curso(Carrera, Codigo)`) y solo entonces reemplaza la política anterior; si el archivo es inválido lanza `politica_invalida(...)` y conserva la anterior. Es el único uso de `assert/retract`, permitido para cargar datos de entrada.
+
+| Regla | Predicado de violación | Razón devuelta | Criterio |
+|:--|:--|:--|:--|
+| Incompatibilidad | `violacion_incompatibilidad/2` | `incompatibilidad(curso(CarA, CodA), curso(CarB, CodB))` | primer par en el orden de la combinación |
+| Límite por área | `violacion_area/2` | `limite_area(Area, Cantidad)` | `Cantidad > N`; tener exactamente `N` cumple |
+| Balance | `violacion_balance/2` | `balance(Carrera, Maximo)` | `Creditos * 100 > Maximo * Total`, sin redondeo; con 0 créditos totales cumple |
+
+Cada `violacion_*` usa corte para devolver solo la primera infracción, y `cumple_incompatibilidad/1`, `cumple_area/1` y `cumple_balance/1` son su negación por falla (`\+`). `cumple_todas/1` las combina y es el único predicado que necesita el evaluador, también para el extra de quitar un curso. Una carrera sin `max_porcentaje/2` no tiene límite (100 %).
+
+**Pares incompatibles declarados** (cursos equivalentes entre los dos planes; la relación es simétrica, basta declararla una vez):
+
+- `PI5516` Ingeniería económica (Computadores) ↔ `AE5121` Ingeniería económica (Ambiental): mismo curso con distinto código.
+- `CE1111` Análisis numérico para la ingeniería ↔ `MA3106` Métodos numéricos: misma base de cálculo numérico.
+- `PI2609` Probabilidad y estadística ↔ `AI2101` Análisis estadístico para ingeniería ambiental: el curso de estadística de cada plan.
+- `MA0101` Matemática general en ambas carreras: llevarlo dos veces sería repetirlo.
+
+**Predicados usables en más de un modo:**
+
+```prolog
+?- son_incompatibles(curso('Ingeniería en Computadores','PI5516'),
+                     curso('Ingeniería Ambiental','AE5121')).   % verificar (en cualquier sentido)
+true.
+?- son_incompatibles(curso('Ingeniería Ambiental','MA3106'), X). % enumerar
+X = curso('Ingeniería en Computadores', 'CE1111').
+?- cursos_de_area(Cursos, matematica, N).    % contar un área dada
+?- cursos_de_area(Cursos, Area, N).          % enumerar cada área presente con su cantidad
+```
+
+`creditos_de_carrera/3` funciona igual que `cursos_de_area/3` y `par_incompatible/3` enumera por backtracking todos los pares incompatibles de una combinación.
+
+**Caso en que el orden de las reglas cambia la razón:** con `max_cursos_area(2)`, la combinación `PI5516` (Computadores, gestión, 4 créditos) + `AE5121` (Ambiental, gestión, 4) + `AE4208` (Ambiental, gestión, 2) incumple dos reglas: el par `PI5516`↔`AE5121` es incompatible y hay 3 cursos de gestión. Con el orden acordado (incompatibilidad → área → balance) se reporta `incompatibilidad(...)`; si el área se evaluara primero, la razón sería `limite_area(gestion, 3)`. El balance se cumple (40 % y 60 %). Se prioriza la incompatibilidad porque no se arregla cambiando de grupo: indica que se eligió dos veces el mismo contenido.
+
+**Pruebas** (desde la raíz del repositorio; 27 casos: simetría, dos reglas incumplidas a la vez, `N` frente a `N+1`, porcentaje exacto frente a superado, cero créditos, política editada e inválida):
+
+```bash
+swipl -q -g run_tests -t halt etapa3_prolog/tests/test_reglas.pl
+```
