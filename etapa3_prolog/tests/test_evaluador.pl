@@ -56,7 +56,7 @@ test(combinacion_aceptada) :-
     ],
     evaluar_combinacion(Cursos, true, ninguna, ninguna).
 
-test(combinacion_rechazada) :-
+test(combinacion_rechazada_sin_reparacion) :-
     Cursos = [
         curso('Ingeniería en Computadores', 'PI5516', 1, 4, gestion),
         curso('Ingeniería Ambiental', 'AE5121', 1, 3, gestion)
@@ -70,6 +70,27 @@ test(combinacion_rechazada) :-
         ),
         ninguna
     ).
+
+test(combinacion_rechazada_con_reparacion) :-
+    Cursos = [
+        curso('Ingeniería en Computadores', 'PRUEBA01', 1, 3, computacion),
+        curso('Ingeniería en Computadores', 'PRUEBA02', 1, 3, computacion),
+        curso('Ingeniería en Computadores', 'PRUEBA03', 1, 3, computacion),
+        curso('Ingeniería Ambiental', 'PRUEBA04', 1, 3, ciencias),
+        curso('Ingeniería Ambiental', 'PRUEBA05', 1, 3, ingenieria)
+    ],
+    evaluar_combinacion(
+        Cursos,
+        false,
+        limite_area(computacion, 3),
+        CursoAQuitar
+    ),
+    assertion(CursoAQuitar ==
+        curso('Ingeniería en Computadores', 'PRUEBA01', 1, 3, computacion)),
+    once((
+        select(CursoAQuitar, Cursos, Restantes),
+        cumple_todas(Restantes)
+    )).
 
 :- end_tests(evaluar_combinacion).
 

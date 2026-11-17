@@ -32,8 +32,9 @@ evaluar_combinacion(Cursos, true, ninguna, ninguna) :-
     cumple_todas(Cursos),
     !.
 
-evaluar_combinacion(Cursos, false, Razon, ninguna) :-
-    primera_violacion(Cursos, Razon).
+evaluar_combinacion(Cursos, false, Razon, CursoAQuitar) :-
+    primera_violacion(Cursos, Razon),
+    buscar_curso_a_quitar(Cursos, CursoAQuitar).
 
 buscar_curso_a_quitar(Cursos, CursoAQuitar) :-
     select(CursoAQuitar, Cursos, Restantes),
